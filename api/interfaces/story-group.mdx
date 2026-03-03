@@ -1,0 +1,87 @@
+---
+title: 'StoryGroup'
+description: 'Interface representing a group of stories belonging to a single entity'
+---
+
+## Overview
+
+The `StoryGroup` interface represents a collection of stories belonging to a single entity (e.g., user, brand). Each story group has a name and contains an array of individual stories.
+
+## Import
+
+```typescript
+import { StoryGroup } from 'ngx-stories';
+```
+
+## Properties
+
+<ResponseField name="id" type="string" optional>
+  Unique identifier for the story group. Auto-generated if not provided.
+</ResponseField>
+
+<ResponseField name="name" type="string" required>
+  Display name shown above the story content.
+</ResponseField>
+
+<ResponseField name="stories" type="Story[]" required>
+  Array of stories in this group. See [Story interface](/api/interfaces/story) for details.
+</ResponseField>
+
+## Usage Example
+
+### Basic Story Group
+
+```typescript
+const storyGroup: StoryGroup = {
+  name: 'John Doe',
+  stories: [
+    { type: 'image', content: 'https://example.com/story1.jpg' },
+    { type: 'video', content: 'https://example.com/story2.mp4' }
+  ]
+};
+```
+
+### Story Group with Custom ID
+
+```typescript
+const storyGroup: StoryGroup = {
+  id: 'user-123',
+  name: 'Brand Name',
+  stories: [
+    { 
+      type: 'image', 
+      content: 'https://example.com/promo.jpg'
+    },
+    { 
+      type: 'component', 
+      content: CustomPromoComponent 
+    }
+  ]
+};
+```
+
+### Multiple Story Groups
+
+```typescript
+const storyGroups: StoryGroup[] = [
+  {
+    name: 'User One',
+    stories: [
+      { type: 'image', content: 'https://example.com/user1-story1.jpg' },
+      { type: 'image', content: 'https://example.com/user1-story2.jpg' }
+    ]
+  },
+  {
+    name: 'User Two',
+    stories: [
+      { type: 'video', content: 'https://example.com/user2-video.mp4' }
+    ]
+  }
+];
+```
+
+## Related Interfaces
+
+- [Story](/api/interfaces/story) - Interface for individual story items
+- [NgxStoriesOptions](/api/interfaces/ngx-stories-options) - Configuration options
+- [StoryChangeEventData](/api/interfaces/story-change-event-data) - Story change event payload

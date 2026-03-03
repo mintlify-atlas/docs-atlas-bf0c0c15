@@ -1,0 +1,197 @@
+---
+title: 'Basic Usage'
+description: 'Learn the core patterns and best practices for using ngx-stories in your Angular application'
+---
+
+## Overview
+
+The ngx-stories component allows you to create Instagram-like story experiences in your Angular application. Stories are organized into **story groups**, where each group contains multiple **stories** that play sequentially.
+
+## Basic Setup
+
+### Import the Component
+
+Since ngx-stories is a standalone component, you can import it directly into your component:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesComponent, StoryGroup } from 'ngx-stories';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxStoriesComponent],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.css'
+})
+export class AppComponent {
+  // Your component logic
+}
+```
+
+## Story Structure
+
+### Understanding Story Groups
+
+A **story group** represents a collection of stories from a single entity (user, brand, etc.). Each group has:
+
+- **name**: Display name shown in the story header
+- **stories**: Array of story items
+- **id** (optional): Unique identifier (auto-generated if not provided)
+
+### Creating Your First Stories
+
+Here's a simple example with image stories:
+
+```typescript app.component.ts
+import { Component } from '@angular/core';
+import { NgxStoriesComponent, StoryGroup } from 'ngx-stories';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxStoriesComponent],
+  templateUrl: './app.component.html'
+})
+export class AppComponent {
+  storyGroups: StoryGroup[] = [
+    {
+      name: 'John Doe',
+      stories: [
+        { type: 'image', content: 'https://example.com/story1.jpg' },
+        { type: 'image', content: 'https://example.com/story2.jpg' }
+      ]
+    },
+    {
+      name: 'Jane Smith',
+      stories: [
+        { type: 'image', content: 'https://example.com/story3.jpg' },
+        { type: 'image', content: 'https://example.com/story4.jpg' }
+      ]
+    }
+  ];
+}
+```
+
+```html app.component.html
+<ngx-stories [storyGroups]="storyGroups"></ngx-stories>
+```
+
+## Story Types
+
+ngx-stories supports three content types:
+
+| Type | Content Value | Description |
+|------|---------------|-------------|
+| `image` | URL string | Static images (JPG, PNG, WebP, etc.) |
+| `video` | URL string | Video files (MP4, WebM, etc.) |
+| `component` | Component class | Custom Angular components |
+
+### Basic Story Interface
+
+Reference: `projects/ngx-stories/src/lib/interfaces/interfaces.ts:29`
+
+```typescript
+interface Story {
+  id?: string;                         // Auto-generated if not provided
+  type: 'image' | 'video' | 'component';
+  content: string | Type<unknown>;     // URL or component class
+  crossOrigin?: 'anonymous' | 'use-credentials' | '' | null;
+}
+```
+
+## Mixed Media Example
+
+You can mix different story types within a single group:
+
+```typescript
+import { CustomComponentComponent } from './components/custom-component.component';
+
+storyGroups: StoryGroup[] = [
+  {
+    name: 'Steve Smith',
+    stories: [
+      { type: 'image', content: 'https://example.com/photo.jpg' },
+      { type: 'component', content: CustomComponentComponent },
+      { type: 'video', content: 'https://example.com/clip.mp4' },
+      { type: 'image', content: 'https://example.com/photo2.jpg' }
+    ]
+  }
+];
+```
+
+## Best Practices
+
+### 1. Story Group Organization
+
+<Tip>
+Group stories logically by user, brand, or content theme. Each group should represent a cohesive set of stories.
+</Tip>
+
+### 2. Content Ordering
+
+Stories play sequentially within a group. Order them intentionally:
+
+```typescript
+stories: [
+  { type: 'image', content: 'teaser.jpg' },      // Quick teaser
+  { type: 'video', content: 'main-content.mp4' }, // Main content
+  { type: 'image', content: 'call-to-action.jpg' } // CTA
+]
+```
+
+### 3. Preloading Considerations
+
+- Images are automatically preloaded
+- Videos start loading when displayed
+- Component stories render immediately
+
+### 4. Error Handling
+
+<Warning>
+If a story fails to load (broken URL, network error), ngx-stories will:
+1. Display an error state for 3 seconds
+2. Automatically advance to the next story
+</Warning>
+
+### 5. Required Inputs
+
+The `storyGroups` input is **required** and must contain at least one group with at least one story:
+
+```typescript
+// ✅ Valid
+storyGroups: StoryGroup[] = [
+  {
+    name: 'User',
+    stories: [{ type: 'image', content: 'image.jpg' }]
+  }
+];
+
+// ❌ Invalid - empty array
+storyGroups: StoryGroup[] = [];
+
+// ❌ Invalid - group with no stories
+storyGroups: StoryGroup[] = [
+  { name: 'User', stories: [] }
+];
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Media Types" icon="image" href="/guides/media-types">
+    Learn about images, videos, and component stories in detail
+  </Card>
+  
+  <Card title="Styling & Options" icon="palette" href="/guides/styling-and-options">
+    Customize dimensions, colors, and appearance
+  </Card>
+  
+  <Card title="Gestures & Navigation" icon="hand-pointer" href="/guides/gestures-and-navigation">
+    Understand user interactions and navigation controls
+  </Card>
+  
+  <Card title="Events" icon="bolt" href="/guides/events">
+    Handle lifecycle events and user actions
+  </Card>
+</CardGroup>

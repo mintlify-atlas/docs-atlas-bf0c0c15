@@ -1,80 +1,255 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick start
+description: Create your first ngx-stories viewer in under 5 minutes
 ---
 
-## Get started in three steps
+# Quick start
 
-Get your documentation site running locally and make your first customization.
+Get your first story viewer up and running in minutes. This guide will walk you through creating a basic Instagram-like story experience.
 
-### Step 1: Set up your local environment
+## Build your first story viewer
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Steps>
+  <Step title="Import required types and component">
+    In your component file, import `NgxStoriesComponent` and the `StoryGroup` interface:
 
-### Step 2: Deploy your changes
+    ```typescript
+    import { Component } from '@angular/core';
+    import { NgxStoriesComponent, StoryGroup } from 'ngx-stories';
+    ```
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Step title="Create story data">
+    Define your story groups with images, videos, or custom components:
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    ```typescript
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [NgxStoriesComponent],
+      templateUrl: './app.component.html',
+      styleUrl: './app.component.css'
+    })
+    export class AppComponent {
+      readonly storyGroups: StoryGroup[] = [
+        {
+          name: 'Steve Smith',
+          stories: [
+            { 
+              type: 'image', 
+              content: 'https://i.ibb.co/ZMVy3KN/pexels-rpnickson-2486168.jpg' 
+            },
+            { 
+              type: 'video', 
+              content: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' 
+            },
+            { 
+              type: 'image', 
+              content: 'https://d38b044pevnwc9.cloudfront.net/cutout-nuxt/enhancer/3.jpg' 
+            }
+          ]
+        },
+        {
+          name: 'John Doe',
+          stories: [
+            { 
+              type: 'image', 
+              content: 'https://d38b044pevnwc9.cloudfront.net/cutout-nuxt/enhancer/4.jpg' 
+            },
+            { 
+              type: 'image', 
+              content: 'https://d38b044pevnwc9.cloudfront.net/cutout-nuxt/enhancer/5.jpg' 
+            },
+            { 
+              type: 'video', 
+              content: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' 
+            }
+          ]
+        }
+      ];
+    }
+    ```
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Add the component to your template">
+    Use the `ngx-stories` component in your HTML template:
 
-### Step 3: Go live
+    ```html
+    <ngx-stories [storyGroups]="storyGroups"></ngx-stories>
+    ```
+  </Step>
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+  <Step title="Run your application">
+    Start your Angular development server:
+
+    ```bash
+    ng serve
+    ```
+
+    Open your browser to `http://localhost:4200` and you should see your story viewer!
+  </Step>
+</Steps>
+
+## Understanding story groups
+
+Stories are organized into groups, where each group represents a collection of stories from a single source (user, brand, etc.).
+
+### StoryGroup interface
+
+```typescript
+interface StoryGroup {
+  /** Unique identifier. Auto-generated if not provided. */
+  id?: string;
+  
+  /** Display name shown above the story content. */
+  name: string;
+  
+  /** Array of stories in this group. */
+  stories: Story[];
+}
+```
+
+### Story interface
+
+```typescript
+interface Story {
+  /** Unique identifier. Auto-generated if not provided. */
+  id?: string;
+  
+  /** The type of content this story displays. */
+  type: 'image' | 'video' | 'component';
+  
+  /**
+   * The content to display.
+   * - For 'image' and 'video' types: URL string
+   * - For 'component' type: Angular component class
+   */
+  content: string | Type<unknown>;
+  
+  /**
+   * CORS setting for image/video elements.
+   * Set to null to omit the attribute entirely.
+   * @default 'anonymous'
+   */
+  crossOrigin?: 'anonymous' | 'use-credentials' | '' | null;
+}
+```
+
+## Adding custom components
+
+You can render any Angular component as a story for maximum flexibility:
+
+```typescript
+import { CustomComponentComponent } from './components/custom-component/custom-component.component';
+
+readonly storyGroups: StoryGroup[] = [
+  {
+    name: 'Steve Smith',
+    stories: [
+      { type: 'image', content: 'https://example.com/image.jpg' },
+      { type: 'component', content: CustomComponentComponent },
+      { type: 'video', content: 'https://example.com/video.mp4' }
+    ]
+  }
+];
+```
+
+<Info>
+Custom components should be self-contained and handle their own styling. They will be rendered within the story viewer's dimensions.
+</Info>
+
+## Customizing the viewer
+
+You can customize the story viewer's appearance and behavior using the `options` input:
+
+```typescript
+import { NgxStoriesOptions } from 'ngx-stories';
+
+storyOptions: NgxStoriesOptions = {
+  width: 400,                      // Width in pixels (default: 338)
+  height: 700,                     // Height in pixels (default: 600)
+  backlitColor: '#000',            // Background color (default: '#1b1b1b')
+  enableGradientBackground: true,  // Dynamic gradient (default: true)
+  currentStoryIndex: 0,            // Starting story index (default: 0)
+  currentStoryGroupIndex: 0        // Starting group index (default: 0)
+};
+```
+
+Then pass it to the component:
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups" 
+  [options]="storyOptions">
+</ngx-stories>
+```
+
+## Handling events
+
+Listen to story events to implement custom behavior:
+
+```typescript
+onStoryEnd() {
+  console.log('All stories completed');
+}
+
+onStoryExit() {
+  console.log('User exited stories');
+}
+
+onStoryChange(eventData: StoryChangeEventData) {
+  console.log('Current story:', eventData.currentStory);
+  console.log('Story index:', eventData.currentStoryIndex);
+}
+```
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnEnd)="onStoryEnd()"
+  (triggerOnExit)="onStoryExit()"
+  (triggerOnStoryChange)="onStoryChange($event)">
+</ngx-stories>
+```
+
+<Tip>
+The `triggerOnStoryChange` event provides detailed information about the current and previous stories, perfect for analytics tracking.
+</Tip>
+
+## Navigation controls
+
+Your users can navigate stories using:
+
+### Touch gestures (mobile)
+- **Swipe left**: Next story group
+- **Swipe right**: Previous story group  
+- **Swipe down**: Exit stories
+- **Swipe up**: Trigger custom action
+- **Tap right side**: Next story
+- **Tap left side**: Previous story
+- **Hold**: Pause story
+
+### Keyboard (desktop)
+- **Arrow right**: Next story
+- **Arrow left**: Previous story
+- **Space**: Toggle play/pause
+- **Escape**: Exit stories
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
+Now that you have a working story viewer, explore more advanced features:
 
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Configuration" icon="gear" href="/guides/styling-and-options">
+    Learn about all available options and customization
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/ngx-stories-component">
+    Explore the complete API documentation
+  </Card>
+  <Card title="Events" icon="bolt" href="/guides/events">
+    Handle story events and user interactions
+  </Card>
+  <Card title="Media Types" icon="images" href="/guides/media-types">
+    Learn about images, videos, and custom components
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

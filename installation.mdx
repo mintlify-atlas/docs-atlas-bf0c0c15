@@ -1,0 +1,133 @@
+---
+title: Installation
+description: Install and configure ngx-stories in your Angular application
+---
+
+# Installation
+
+Get ngx-stories up and running in your Angular application in just a few steps.
+
+## Prerequisites
+
+Before installing ngx-stories, ensure you have:
+
+- **Node.js** 18.x or higher
+- **Angular** 18.2.0 or higher
+- **npm**, **yarn**, or **pnpm** package manager
+
+<Warning>
+ngx-stories requires Angular 18.2.0 or higher. If you're using an older version of Angular, you'll need to upgrade your project first.
+</Warning>
+
+## Install the package
+
+<Steps>
+  <Step title="Install via package manager">
+    Choose your preferred package manager and run the installation command:
+
+    <CodeGroup>
+      ```bash npm
+      npm install ngx-stories
+      ```
+
+      ```bash yarn
+      yarn add ngx-stories
+      ```
+
+      ```bash pnpm
+      pnpm add ngx-stories
+      ```
+    </CodeGroup>
+
+    This will install ngx-stories and its required peer dependencies.
+  </Step>
+
+  <Step title="Import the component">
+    ngx-stories is built as a standalone component, making it easy to use in both standalone and module-based Angular applications.
+
+    ### For standalone components (recommended)
+
+    Import `NgxStoriesComponent` directly in your component:
+
+    ```typescript
+    import { Component } from '@angular/core';
+    import { NgxStoriesComponent, StoryGroup } from 'ngx-stories';
+
+    @Component({
+      selector: 'app-root',
+      standalone: true,
+      imports: [NgxStoriesComponent],
+      templateUrl: './app.component.html',
+      styleUrl: './app.component.css'
+    })
+    export class AppComponent {
+      // Your component logic
+    }
+    ```
+
+    ### For NgModule-based applications
+
+    Import `NgxStoriesComponent` in your module's imports array:
+
+    ```typescript
+    import { NgModule } from '@angular/core';
+    import { BrowserModule } from '@angular/platform-browser';
+    import { NgxStoriesComponent } from 'ngx-stories';
+    import { AppComponent } from './app.component';
+
+    @NgModule({
+      declarations: [AppComponent],
+      imports: [
+        BrowserModule,
+        NgxStoriesComponent  // Add here
+      ],
+      bootstrap: [AppComponent]
+    })
+    export class AppModule { }
+    ```
+  </Step>
+
+  <Step title="Verify installation">
+    Add a basic story viewer to your template to verify everything is working:
+
+    ```html
+    <ngx-stories [storyGroups]="storyGroups"></ngx-stories>
+    ```
+
+    If you see the story viewer render without errors, you're all set!
+  </Step>
+</Steps>
+
+## Peer dependencies
+
+ngx-stories has the following peer dependencies that are automatically satisfied if you're using Angular 18.2.0+:
+
+```json
+{
+  "@angular/common": "^18.2.0",
+  "@angular/core": "^18.2.0"
+}
+```
+
+<Info>
+These packages should already be installed in your Angular project. The package manager will notify you if any peer dependencies are missing.
+</Info>
+
+## Version compatibility
+
+| ngx-stories version | Angular version | Status |
+|---------------------|-----------------|--------|
+| 0.3.x               | 18.2.0+         | ✅ Current |
+| 0.2.x               | 17.x - 18.x     | Deprecated |
+
+<Tip>
+Always use the latest version of ngx-stories to get the newest features, bug fixes, and performance improvements.
+</Tip>
+
+## Next steps
+
+Now that you have ngx-stories installed, you're ready to build your first story viewer!
+
+<Card title="Quick start guide" icon="bolt" href="/quickstart">
+  Learn how to create your first story viewer in under 5 minutes
+</Card>

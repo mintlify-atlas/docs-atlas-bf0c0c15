@@ -1,0 +1,455 @@
+---
+title: 'Gestures and Navigation'
+description: 'Touch gestures, keyboard controls, and story navigation patterns'
+---
+
+## Overview
+
+ngx-stories provides intuitive navigation through touch gestures, mouse interactions, and keyboard shortcuts. Stories advance automatically or through user input.
+
+## Touch Gestures
+
+### Swipe Left
+
+**Action**: Navigate to the next story group
+
+**Behavior**:
+- Swipes left with a sliding animation (600ms duration)
+- Moves to the first story of the next group
+- If on the last group and last story, triggers end event
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:355`
+
+```typescript
+if (direction === 'left') {
+  this.isSwipingLeft = true;
+  // Animation duration: 600ms
+  setTimeout(() => {
+    this.goToNextStoryGroup();
+    this.resetSwipe();
+  }, 600);
+}
+```
+
+<Info>
+Swipe threshold: **50 pixels** minimum distance required to register as a swipe.
+</Info>
+
+---
+
+### Swipe Right
+
+**Action**: Navigate to the previous story group
+
+**Behavior**:
+- Swipes right with a sliding animation (600ms duration)
+- Moves to the first story of the previous group
+- If already on the first group, stays on the first group
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:371`
+
+```typescript
+if (direction === 'right') {
+  this.isSwipingRight = true;
+  setTimeout(() => {
+    this.goToPreviousStoryGroup();
+    this.resetSwipe();
+  }, 600);
+}
+```
+
+---
+
+### Swipe Down
+
+**Action**: Exit the story viewer
+
+**Behavior**:
+- Stops story playback
+- Triggers the `triggerOnExit` event
+- Typically used to close the story viewer
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:379`
+
+```typescript
+if (direction === 'down') {
+  this.clearProgressInterval();
+  this.onExit(); // Emits triggerOnExit event
+}
+```
+
+**Usage Example**:
+
+```typescript
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnExit)="closeStoryViewer()">
+</ngx-stories>
+```
+
+```typescript
+closeStoryViewer() {
+  // Hide the story viewer
+  this.showStories = false;
+}
+```
+
+---
+
+### Swipe Up
+
+**Action**: "See More" or custom action
+
+**Behavior**:
+- Triggers the `triggerOnSwipeUp` event
+- Story continues playing
+- Commonly used for "See More" links or CTAs
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:382`
+
+```typescript
+if (direction === 'up') {
+  this.onSwipeUpTriggered(); // Emits triggerOnSwipeUp event
+}
+```
+
+**Usage Example**:
+
+```typescript
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnSwipeUp)="showMoreDetails()">
+</ngx-stories>
+```
+
+```typescript
+showMoreDetails() {
+  // Open modal, navigate to detail page, etc.
+  console.log('User wants to see more!');
+  window.open('https://example.com/details', '_blank');
+}
+```
+
+---
+
+### Tap (Click)
+
+**Action**: Navigate to next/previous story based on tap position
+
+**Behavior**:
+- **Tap right side**: Advance to next story
+- **Tap left side**: Go to previous story
+- Within the same story group
+
+<Note>
+Tap zones are determined by the x-coordinate of the tap relative to the story container width.
+</Note>
+
+---
+
+### Hold (Long Press)
+
+**Action**: Pause the current story
+
+**Behavior**:
+- Hold for **500ms** to pause
+- Progress bar freezes
+- Video playback pauses
+- Release to resume playback
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:541`
+
+```typescript
+onTouchStart(event: TouchEvent | MouseEvent) {
+  // ... capture touch position
+  this.holdTimeout = setTimeout(() => {
+    this.onHold();
+  }, 500); // HOLD_DELAY_MS
+}
+
+onHold() {
+  this.isHolding = true;
+  this.storyState = 'paused';
+  this.pauseCurrentVideo();
+  this.clearProgressInterval();
+}
+
+onRelease(event: TouchEvent | MouseEvent) {
+  this.clearHoldTimeout();
+  if (this.isHolding) {
+    this.isHolding = false;
+    this.storyState = 'playing';
+    this.startStoryProgress();
+    this.playCurrentStoryVideo();
+  }
+}
+```
+
+**Visual Feedback**:
+- Progress bar stops advancing
+- Story state changes to 'paused'
+
+---
+
+## Keyboard Navigation
+
+### Keyboard Controls
+
+ngx-stories supports keyboard shortcuts for accessibility and desktop usage.
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:164`
+
+```typescript
+@HostListener('document:keydown', ['$event'])
+handleKeyPress(event: KeyboardEvent): void {
+  if (event.key === 'ArrowRight') {
+    this.navigateStory('next');
+  } else if (event.key === 'ArrowLeft') {
+    this.navigateStory('previous');
+  } else if (event.key === ' ') {
+    event.preventDefault(); // Prevent page scrolling
+    this.togglePause();
+  } else if (event.key === 'Escape') {
+    this.onExit();
+  }
+}
+```
+
+### Keyboard Shortcuts Table
+
+| Key | Action | Scope |
+|-----|--------|-------|
+| **Arrow Right** (`→`) | Next story | Within current story group |
+| **Arrow Left** (`←`) | Previous story | Within current story group |
+| **Space** | Toggle Pause/Play | Current story |
+| **Escape** | Exit stories | Triggers `triggerOnExit` event |
+
+### Space Bar - Toggle Pause
+
+```typescript
+togglePause() {
+  this.storyState = this.storyState === 'paused' ? 'playing' : 'paused';
+  if (this.storyState === 'paused') {
+    this.clearProgressInterval();
+    this.pauseCurrentVideo();
+  } else {
+    this.startStoryProgress();
+    this.playCurrentStoryVideo();
+  }
+}
+```
+
+<Tip>
+Keyboard navigation makes ngx-stories accessible for desktop users and those using assistive technologies.
+</Tip>
+
+---
+
+## Navigation Within Stories
+
+### Story-Level Navigation
+
+Navigating between stories within the same group:
+
+```typescript
+navigateStory(direction: 'next' | 'previous') {
+  if (this.isTransitioning) return;
+  
+  this.pauseCurrentVideo(true);
+  this.setTransitionState(true);
+  this.clearProgressInterval();
+
+  const { storyGroupIndex, storyIndex } = this.stateService.navigate(
+    direction, 
+    this.storyGroupChange.bind(this)
+  );
+
+  this.currentStoryGroupIndex = storyGroupIndex;
+  this.currentStoryIndex = storyIndex;
+  
+  // Trigger onEnd when all groups completed
+  if (this.currentStoryGroupIndex === this.storyGroups.length) {
+    this.onEnd();
+    return;
+  }
+
+  this.progressWidth = 0;
+  this.startStoryProgress();
+}
+```
+
+**Key Points**:
+- Prevents navigation during transitions
+- Resets progress bar
+- Handles end-of-stories scenario
+- Triggers appropriate events
+
+---
+
+## Story Group Navigation
+
+### Next Story Group
+
+```typescript
+private goToNextStoryGroup() {
+  this.pauseCurrentVideo(true);
+  if (this.isTransitioning) return;
+  
+  this.isTransitioning = true;
+  this.currentStoryGroupIndex = (this.currentStoryGroupIndex + 1) % this.storyGroups.length;
+  
+  if (this.hasReachedEndOfStories()) return;
+  
+  this.currentStoryIndex = 0; // Reset to first story of group
+  this.resetBackground();
+  this.clearProgressInterval();
+  this.progressWidth = 0;
+  this.storyGroupChange(); // Emit event
+  
+  setTimeout(() => {
+    this.startStoryProgress();
+    this.isTransitioning = false;
+  }, 500); // HOLD_DELAY_MS
+}
+```
+
+### Previous Story Group
+
+```typescript
+private goToPreviousStoryGroup() {
+  this.pauseCurrentVideo(true);
+  if (this.isTransitioning) return;
+  
+  this.isTransitioning = true;
+  this.currentStoryIndex = 0; // Reset to first story of group
+  this.resetBackground();
+  this.clearProgressInterval();
+  
+  if (this.currentStoryGroupIndex !== 0 && this.storyGroups.length > this.currentStoryGroupIndex) {
+    this.currentStoryGroupIndex--;
+  }
+  
+  this.progressWidth = 0;
+  this.storyGroupChange(); // Emit event
+  
+  setTimeout(() => {
+    this.startStoryProgress();
+    this.isTransitioning = false;
+  }, 500);
+}
+```
+
+---
+
+## Automatic Progression
+
+### Auto-Advance
+
+Stories automatically advance when their duration completes:
+
+```typescript
+startProgressInterval(storyDuration: number) {
+  const progressPerTick = 100 / (storyDuration / 50); // 50ms interval
+
+  this.intervalId = setInterval(() => {
+    if (!this.isLoading) {
+      this.progressWidth += progressPerTick;
+    }
+    
+    if (this.progressWidth >= 100) {
+      clearInterval(this.intervalId);
+      this.navigateStory('next'); // Auto-advance
+    }
+  }, 50);
+}
+```
+
+**Durations**:
+- **Images**: 5000ms (5 seconds)
+- **Videos**: Video duration (dynamic)
+- **Components**: 5000ms (5 seconds)
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:92`
+
+---
+
+## Swipe Detection Algorithm
+
+```typescript
+private detectSwipe(startX: number, startY: number, endX: number, endY: number) {
+  const deltaX = endX - startX;
+  const deltaY = endY - startY;
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  const threshold = 50; // Minimum distance
+
+  if (Math.max(absX, absY) > threshold) {
+    if (absX > absY) {
+      // Horizontal swipe
+      if (deltaX > 0) {
+        this.handleSwipe('right');
+      } else {
+        this.handleSwipe('left');
+      }
+    } else {
+      // Vertical swipe
+      if (deltaY > 0) {
+        this.handleSwipe('down');
+      } else {
+        this.handleSwipe('up');
+      }
+    }
+  }
+}
+```
+
+**Detection Logic**:
+1. Calculate horizontal and vertical deltas
+2. Check if movement exceeds threshold (50px)
+3. Determine primary direction (horizontal vs vertical)
+4. Trigger appropriate swipe handler
+
+---
+
+## Navigation Summary
+
+<CardGroup cols={2}>
+  <Card title="Touch Gestures" icon="hand-pointer">
+    - Swipe left/right for groups
+    - Swipe up/down for actions
+    - Tap to navigate
+    - Hold to pause
+  </Card>
+  
+  <Card title="Keyboard Controls" icon="keyboard">
+    - Arrow keys for navigation
+    - Space to pause/play
+    - Escape to exit
+  </Card>
+  
+  <Card title="Auto-Advance" icon="forward">
+    - Images: 5 seconds
+    - Videos: Duration-based
+    - Components: 5 seconds
+  </Card>
+  
+  <Card title="Events" icon="bolt">
+    - triggerOnExit (swipe down/Escape)
+    - triggerOnSwipeUp
+    - onStoryGroupChange
+    - triggerOnStoryChange
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Events" icon="bolt" href="/guides/events">
+    Learn how to handle navigation events and lifecycle hooks
+  </Card>
+  
+  <Card title="Styling & Options" icon="palette" href="/guides/styling-and-options">
+    Customize dimensions and appearance
+  </Card>
+</CardGroup>

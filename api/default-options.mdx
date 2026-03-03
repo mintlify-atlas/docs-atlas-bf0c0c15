@@ -1,0 +1,163 @@
+---
+title: 'DEFAULT_STORIES_OPTIONS'
+description: 'Default configuration options for the ngx-stories component'
+---
+
+## Overview
+
+The `DEFAULT_STORIES_OPTIONS` constant provides the default configuration values used by ngx-stories when no options are explicitly provided. These defaults ensure the component works out of the box with sensible settings.
+
+```typescript
+const DEFAULT_STORIES_OPTIONS: Required<NgxStoriesOptions> = {
+  width: 338,
+  height: 600,
+  currentStoryIndex: 0,
+  currentStoryGroupIndex: 0,
+  backlitColor: '#1b1b1b',
+  enableGradientBackground: true
+};
+```
+
+## Properties
+
+<ParamField path="width" type="number" default="338">
+  Width of the story container in pixels. The default of 338px provides a mobile-optimized portrait view similar to popular social media stories.
+</ParamField>
+
+<ParamField path="height" type="number" default="600">
+  Height of the story container in pixels. The default of 600px maintains a 9:16 aspect ratio ideal for story content.
+</ParamField>
+
+<ParamField path="currentStoryIndex" type="number" default="0">
+  Initial story index to display within the current story group. Set to 0 to start from the first story.
+</ParamField>
+
+<ParamField path="currentStoryGroupIndex" type="number" default="0">
+  Initial story group index to display. Set to 0 to start from the first story group.
+</ParamField>
+
+<ParamField path="backlitColor" type="string" default="#1b1b1b">
+  Background color used when gradient is disabled or for component stories. The default dark gray (#1b1b1b) provides good contrast for most content.
+</ParamField>
+
+<ParamField path="enableGradientBackground" type="boolean" default="true">
+  Enable dynamic gradient background based on content colors. When enabled, the background adapts to the dominant colors in image and video stories.
+</ParamField>
+
+## When Defaults Are Used
+
+Default values are automatically applied when:
+
+1. No options object is provided to the component
+2. Specific properties are omitted from the options object
+3. Properties are explicitly set to `undefined`
+
+The component merges your provided options with these defaults, so you only need to specify the values you want to customize.
+
+## Overriding Defaults
+
+### Partial Override
+
+You can override only specific properties:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesOptions } from 'ngx-stories';
+
+@Component({
+  selector: 'app-stories',
+  template: `
+    <ngx-stories 
+      [stories]="storyGroups"
+      [options]="customOptions">
+    </ngx-stories>
+  `
+})
+export class StoriesComponent {
+  customOptions: NgxStoriesOptions = {
+    width: 400,
+    height: 700,
+    // Other properties will use defaults
+  };
+}
+```
+
+### Complete Override
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesOptions } from 'ngx-stories';
+
+@Component({
+  selector: 'app-custom-stories',
+  template: `
+    <ngx-stories 
+      [stories]="storyGroups"
+      [options]="fullOptions">
+    </ngx-stories>
+  `
+})
+export class CustomStoriesComponent {
+  fullOptions: NgxStoriesOptions = {
+    width: 450,
+    height: 800,
+    currentStoryIndex: 2,
+    currentStoryGroupIndex: 1,
+    backlitColor: '#000000',
+    enableGradientBackground: false
+  };
+}
+```
+
+### Starting from a Specific Story
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesOptions } from 'ngx-stories';
+
+@Component({
+  selector: 'app-resume-stories',
+  template: `
+    <ngx-stories 
+      [stories]="storyGroups"
+      [options]="resumeOptions">
+    </ngx-stories>
+  `
+})
+export class ResumeStoriesComponent {
+  // Resume from the 3rd story in the 2nd group
+  resumeOptions: NgxStoriesOptions = {
+    currentStoryIndex: 2,
+    currentStoryGroupIndex: 1
+  };
+}
+```
+
+### Custom Styling
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesOptions } from 'ngx-stories';
+
+@Component({
+  selector: 'app-branded-stories',
+  template: `
+    <ngx-stories 
+      [stories]="storyGroups"
+      [options]="brandedOptions">
+    </ngx-stories>
+  `
+})
+export class BrandedStoriesComponent {
+  // Disable gradient for consistent brand background
+  brandedOptions: NgxStoriesOptions = {
+    backlitColor: '#6366f1', // Brand color
+    enableGradientBackground: false
+  };
+}
+```
+
+## Related
+
+- [NgxStoriesOptions](/api/interfaces/ngx-stories-options) - Full interface definition
+- [Styling and Options](/guides/styling-and-options) - Complete configuration guide

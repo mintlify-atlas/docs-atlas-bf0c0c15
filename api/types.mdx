@@ -1,0 +1,109 @@
+---
+title: 'Type Aliases'
+description: 'Type aliases used in ngx-stories for story types and state management'
+---
+
+## StoryType
+
+Defines the supported content types for a story.
+
+```typescript
+type StoryType = 'image' | 'video' | 'component';
+```
+
+### Values
+
+<ParamField path="image" type="string">
+  Static image URL. The story will display an image loaded from the provided URL.
+</ParamField>
+
+<ParamField path="video" type="string">
+  Video URL (mp4, webm, etc.). The story will display a video loaded from the provided URL.
+</ParamField>
+
+<ParamField path="component" type="Angular Component">
+  Dynamic Angular component. The story will render a custom Angular component, allowing for interactive or complex content.
+</ParamField>
+
+### Usage
+
+```typescript
+import { Story, StoryType } from 'ngx-stories';
+
+// Image story
+const imageStory: Story = {
+  type: 'image' as StoryType,
+  content: 'https://example.com/photo.jpg'
+};
+
+// Video story
+const videoStory: Story = {
+  type: 'video' as StoryType,
+  content: 'https://example.com/clip.mp4'
+};
+
+// Component story
+const componentStory: Story = {
+  type: 'component' as StoryType,
+  content: MyCustomComponent
+};
+```
+
+## StoryStateType
+
+Represents the playback state of the stories viewer.
+
+```typescript
+type StoryStateType = 'playing' | 'paused' | 'holding' | 'buffering';
+```
+
+### Values
+
+<ParamField path="playing" type="string">
+  The story is actively playing. The progress bar is advancing, and video/component content is running.
+</ParamField>
+
+<ParamField path="paused" type="string">
+  The story is paused. Playback has been stopped by user interaction or programmatically.
+</ParamField>
+
+<ParamField path="holding" type="string">
+  The story is temporarily held. This occurs when the user is pressing and holding on the story (touch/mouse down).
+</ParamField>
+
+<ParamField path="buffering" type="string">
+  The story is buffering. This applies to video content that is loading or waiting for data.
+</ParamField>
+
+### Usage
+
+```typescript
+import { StoryStateType } from 'ngx-stories';
+
+// Monitor state changes
+onStoryStateChange(state: StoryStateType) {
+  switch (state) {
+    case 'playing':
+      console.log('Story is now playing');
+      break;
+    case 'paused':
+      console.log('Story has been paused');
+      break;
+    case 'holding':
+      console.log('User is holding the story');
+      break;
+    case 'buffering':
+      console.log('Story is buffering');
+      break;
+  }
+}
+```
+
+### State Transitions
+
+Typical state flow:
+- `playing` → `paused` (user pauses)
+- `playing` → `holding` (user holds down)
+- `holding` → `playing` (user releases)
+- `playing` → `buffering` → `playing` (video loads)
+- `paused` → `playing` (user resumes)

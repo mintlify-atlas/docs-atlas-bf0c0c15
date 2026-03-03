@@ -1,0 +1,192 @@
+---
+title: 'StoryChangeEventData'
+description: 'Payload emitted by the triggerOnStoryChange event'
+---
+
+## Overview
+
+The `StoryChangeEventData` interface defines the structure of the data emitted when a story changes. This event is triggered by the `triggerOnStoryChange` output and provides comprehensive information about both the current and previous story states.
+
+## Import
+
+```typescript
+import { StoryChangeEventData } from 'ngx-stories';
+```
+
+## Properties
+
+<ResponseField name="currentStoryGroupName" type="string" required>
+  Name of the current story group being displayed.
+</ResponseField>
+
+<ResponseField name="currentStoryGroupIndex" type="number" required>
+  Index of the current story group in the story groups array.
+</ResponseField>
+
+<ResponseField name="currentStory" type="Story" required>
+  The currently active story object. See [Story interface](/api/interfaces/story) for details.
+</ResponseField>
+
+<ResponseField name="currentStoryIndex" type="number" required>
+  Index of the current story within its group.
+</ResponseField>
+
+<ResponseField name="previousStory" type="Story | null" required>
+  The previously active story, or `null` if this is the first story.
+</ResponseField>
+
+<ResponseField name="previousStoryIndex" type="number | null" required>
+  Index of the previous story, or `null` if this is the first story.
+</ResponseField>
+
+## Usage Examples
+
+### Basic Event Handler
+
+```typescript
+import { Component } from '@angular/core';
+import { StoryChangeEventData, StoryGroup } from 'ngx-stories';
+
+@Component({
+  selector: 'app-stories',
+  template: `
+    <ngx-stories 
+      [storyGroups]="storyGroups"
+      (triggerOnStoryChange)="onStoryChange($event)">
+    </ngx-stories>
+  `
+})
+export class StoriesComponent {
+  storyGroups: StoryGroup[] = [
+    // ... your story groups
+  ];
+
+  onStoryChange(event: StoryChangeEventData): void {
+    console.log('Current story group:', event.currentStoryGroupName);
+    console.log('Current story index:', event.currentStoryIndex);
+    console.log('Story type:', event.currentStory.type);
+  }
+}
+```
+
+### Tracking Story Progress
+
+```typescript
+onStoryChange(event: StoryChangeEventData): void {
+  const progress = {
+    group: event.currentStoryGroupIndex,
+    story: event.currentStoryIndex,
+    groupName: event.currentStoryGroupName
+  };
+  
+  // Save progress to local storage or analytics
+  localStorage.setItem('storyProgress', JSON.stringify(progress));
+}
+```
+
+### Analytics Tracking
+
+```typescript
+onStoryChange(event: StoryChangeEventData): void {
+  // Track story views
+  this.analyticsService.trackEvent('story_viewed', {
+    story_group: event.currentStoryGroupName,
+    story_index: event.currentStoryIndex,
+    story_type: event.currentStory.type,
+    previous_story_index: event.previousStoryIndex
+  });
+}
+```
+
+### Detecting First Story
+
+```typescript
+onStoryChange(event: StoryChangeEventData): void {
+  if (event.previousStory === null) {
+    console.log('This is the first story!');
+    // Show welcome message or tutorial
+  }
+}
+```
+
+### Handling Story Transitions
+
+```typescript
+onStoryChange(event: StoryChangeEventData): void {
+  // Check if moving to a different story group
+  if (event.previousStory && 
+      event.previousStoryIndex !== null) {
+    const changedGroup = event.currentStoryGroupIndex !== 
+      this.getPreviousGroupIndex(event);
+    
+    if (changedGroup) {
+      console.log('Switched to new story group:', event.currentStoryGroupName);
+    }
+  }
+}
+```
+
+### Loading Additional Content
+
+```typescript
+onStoryChange(event: StoryChangeEventData): void {
+  // Preload next story content
+  const isLastStory = event.currentStoryIndex === 
+    this.getCurrentGroupStoryCount() - 1;
+  
+  if (isLastStory) {
+    this.preloadNextStoryGroup(event.currentStoryGroupIndex + 1);
+  }
+}
+```
+
+### Custom Story State Management
+
+```typescript
+import { Component } from '@angular/core';
+import { StoryChangeEventData, StoryGroup } from 'ngx-stories';
+
+interface StoryViewState {
+  groupName: string;
+  storyIndex: number;
+  timestamp: number;
+}
+
+@Component({
+  selector: 'app-stories',
+  template: `
+    <ngx-stories 
+      [storyGroups]="storyGroups"
+      (triggerOnStoryChange)="onStoryChange($event)">
+    </ngx-stories>
+  `
+})
+export class StoriesComponent {
+  viewHistory: StoryViewState[] = [];
+  
+  onStoryChange(event: StoryChangeEventData): void {
+    this.viewHistory.push({
+      groupName: event.currentStoryGroupName,
+      storyIndex: event.currentStoryIndex,
+      timestamp: Date.now()
+    });
+    
+    // Track time spent on previous story
+    if (event.previousStory && this.viewHistory.length > 1) {
+      const previousView = this.viewHistory[this.viewHistory.length - 2];
+      const timeSpent = Date.now() - previousView.timestamp;
+      console.log('Time spent on previous story:', timeSpent, 'ms');
+    }
+  }
+}
+```
+
+## Related Interfaces
+
+- [Story](/api/interfaces/story) - Used in `currentStory` and `previousStory` properties
+- [StoryGroup](/api/interfaces/story-group) - Contains the stories being tracked
+- [NgxStoriesOptions](/api/interfaces/ngx-stories-options) - Configuration options
+
+## Related Events
+
+- See [Events documentation](/guides/events) for more information about `triggerOnStoryChange` and other available events

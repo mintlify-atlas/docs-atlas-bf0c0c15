@@ -1,0 +1,548 @@
+---
+title: 'Styling and Options'
+description: 'Customize dimensions, colors, and appearance of the ngx-stories component'
+---
+
+## Overview
+
+The ngx-stories component offers extensive customization through the `NgxStoriesOptions` interface. Configure dimensions, colors, starting positions, and visual effects.
+
+## NgxStoriesOptions Interface
+
+Reference: `projects/ngx-stories/src/lib/interfaces/interfaces.ts:77`
+
+```typescript
+interface NgxStoriesOptions {
+  width?: number;
+  height?: number;
+  currentStoryIndex?: number;
+  currentStoryGroupIndex?: number;
+  backlitColor?: string;
+  enableGradientBackground?: boolean;
+}
+```
+
+## Default Values
+
+Reference: `projects/ngx-stories/src/lib/utils/default-options.ts:7`
+
+```typescript
+const DEFAULT_STORIES_OPTIONS: Required<NgxStoriesOptions> = {
+  width: 338,
+  height: 600,
+  currentStoryIndex: 0,
+  currentStoryGroupIndex: 0,
+  backlitColor: '#1b1b1b',
+  enableGradientBackground: true
+};
+```
+
+---
+
+## Configuration Options
+
+### Basic Usage
+
+```typescript app.component.ts
+import { Component } from '@angular/core';
+import { NgxStoriesComponent, NgxStoriesOptions, StoryGroup } from 'ngx-stories';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxStoriesComponent],
+  templateUrl: './app.component.html'
+})
+export class AppComponent {
+  storyOptions: NgxStoriesOptions = {
+    width: 400,
+    height: 700,
+    backlitColor: '#000000',
+    enableGradientBackground: true
+  };
+
+  storyGroups: StoryGroup[] = [ /* ... */ ];
+}
+```
+
+```html app.component.html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  [options]="storyOptions">
+</ngx-stories>
+```
+
+---
+
+## Dimension Options
+
+### Width
+
+**Property**: `width`  
+**Type**: `number`  
+**Default**: `338` (pixels)  
+**Description**: Width of the story container
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  width: 400  // 400px wide
+};
+```
+
+<Tabs>
+  <Tab title="Mobile (Default)">
+    ```typescript
+    storyOptions: NgxStoriesOptions = {
+      width: 338,   // ~Mobile story size
+      height: 600
+    };
+    ```
+  </Tab>
+  
+  <Tab title="Tablet">
+    ```typescript
+    storyOptions: NgxStoriesOptions = {
+      width: 450,   // Larger for tablets
+      height: 800
+    };
+    ```
+  </Tab>
+  
+  <Tab title="Desktop">
+    ```typescript
+    storyOptions: NgxStoriesOptions = {
+      width: 500,   // Desktop viewing
+      height: 900
+    };
+    ```
+  </Tab>
+  
+  <Tab title="Custom Aspect">
+    ```typescript
+    storyOptions: NgxStoriesOptions = {
+      width: 600,   // 16:9 aspect ratio
+      height: 337.5
+    };
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+### Height
+
+**Property**: `height`  
+**Type**: `number`  
+**Default**: `600` (pixels)  
+**Description**: Height of the story container
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  height: 700  // 700px tall
+};
+```
+
+<Info>
+The default dimensions (338×600) are optimized for mobile story viewing, similar to Instagram and Snapchat stories.
+</Info>
+
+---
+
+## Color Options
+
+### Backlit Color
+
+**Property**: `backlitColor`  
+**Type**: `string` (CSS color value)  
+**Default**: `'#1b1b1b'` (dark gray)  
+**Description**: Background color behind story content
+
+**Used When**:
+- Gradient background is disabled
+- Displaying component stories (always solid)
+- Color extraction fails
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  backlitColor: '#000000'  // Pure black
+};
+```
+
+**Supported Formats**:
+
+<Tabs>
+  <Tab title="Hex">
+    ```typescript
+    backlitColor: '#000000'      // Black
+    backlitColor: '#1b1b1b'      // Default dark gray
+    backlitColor: '#2d2d2d'      // Lighter gray
+    ```
+  </Tab>
+  
+  <Tab title="RGB">
+    ```typescript
+    backlitColor: 'rgb(0, 0, 0)'           // Black
+    backlitColor: 'rgb(27, 27, 27)'        // Default
+    backlitColor: 'rgba(0, 0, 0, 0.8)'     // Semi-transparent
+    ```
+  </Tab>
+  
+  <Tab title="Named Colors">
+    ```typescript
+    backlitColor: 'black'
+    backlitColor: 'darkslategray'
+    backlitColor: 'midnightblue'
+    ```
+  </Tab>
+</Tabs>
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:718`
+
+```typescript
+if (currentStory.type === 'component' || !this.options.enableGradientBackground) {
+  this.currentStoryBackground = this.options.backlitColor || '#1b1b1b';
+}
+```
+
+---
+
+### Gradient Background
+
+**Property**: `enableGradientBackground`  
+**Type**: `boolean`  
+**Default**: `true`  
+**Description**: Enable dynamic gradient backgrounds based on content colors
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  enableGradientBackground: true  // Enable Instagram-like gradients
+};
+```
+
+**How It Works**:
+
+1. **Color Extraction**: Analyzes image/video to find dominant colors
+2. **Gradient Creation**: Creates smooth linear gradient background
+3. **Dynamic Updates**: For videos, updates colors during playback
+
+**Implementation**: `projects/ngx-stories/src/lib/ngx-stories.component.ts:831`
+
+```typescript
+getDominantColors(source: HTMLImageElement | HTMLVideoElement): string[] {
+  // Draw media to canvas (50x50 for performance)
+  this.context.drawImage(source, 0, 0, 50, 50);
+  const imageData = this.context.getImageData(0, 0, 50, 50);
+  
+  // Analyze pixels and extract dominant colors
+  // Returns top 2 colors for gradient
+  return [`rgb(${color1})`, `rgb(${color2})`];
+}
+```
+
+<Tabs>
+  <Tab title="Enabled (Default)">
+    ```typescript
+    storyOptions: NgxStoriesOptions = {
+      enableGradientBackground: true,
+      backlitColor: '#1b1b1b'  // Fallback if extraction fails
+    };
+    ```
+
+    **Result**: Dynamic gradients that match content colors, smooth transitions for videos
+  </Tab>
+  
+  <Tab title="Disabled">
+    ```typescript
+    storyOptions: NgxStoriesOptions = {
+      enableGradientBackground: false,
+      backlitColor: '#000000'  // Solid color always
+    };
+    ```
+
+    **Result**: Solid `backlitColor` for all stories (better performance, less visual flair)
+  </Tab>
+</Tabs>
+
+<Warning>
+Gradient extraction requires CORS-enabled media. Set `crossOrigin: 'anonymous'` on stories from external domains.
+</Warning>
+
+---
+
+## Starting Position Options
+
+### Current Story Index
+
+**Property**: `currentStoryIndex`  
+**Type**: `number`  
+**Default**: `0`  
+**Description**: Initial story index within the starting group
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  currentStoryIndex: 2  // Start at 3rd story (zero-indexed)
+};
+```
+
+**Use Cases**:
+- Resume from saved progress
+- Deep linking to specific story
+- Skip intro stories
+
+**Example: Resume Progress**
+
+```typescript
+export class AppComponent {
+  storyOptions: NgxStoriesOptions = {
+    currentStoryIndex: this.getSavedStoryIndex(),
+    currentStoryGroupIndex: this.getSavedGroupIndex()
+  };
+
+  getSavedStoryIndex(): number {
+    return parseInt(localStorage.getItem('lastStoryIndex') || '0');
+  }
+
+  getSavedGroupIndex(): number {
+    return parseInt(localStorage.getItem('lastGroupIndex') || '0');
+  }
+
+  onStoryChange(data: any) {
+    localStorage.setItem('lastStoryIndex', data.currentStoryIndex);
+    localStorage.setItem('lastGroupIndex', data.currentStoryGroupIndex);
+  }
+}
+```
+
+---
+
+### Current Story Group Index
+
+**Property**: `currentStoryGroupIndex`  
+**Type**: `number`  
+**Default**: `0`  
+**Description**: Initial story group index
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  currentStoryGroupIndex: 1  // Start at 2nd group
+};
+```
+
+**Example: Deep Linking**
+
+```typescript
+export class AppComponent implements OnInit {
+  storyOptions: NgxStoriesOptions = {};
+
+  ngOnInit() {
+    // Parse URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const groupIndex = parseInt(params.get('group') || '0');
+    const storyIndex = parseInt(params.get('story') || '0');
+
+    this.storyOptions = {
+      currentStoryGroupIndex: groupIndex,
+      currentStoryIndex: storyIndex
+    };
+  }
+}
+```
+
+**URL**: `https://example.com/stories?group=2&story=1`  
+**Result**: Opens 3rd group, 2nd story
+
+---
+
+## Complete Configuration Examples
+
+### Example 1: Instagram-Style (Default)
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  width: 338,
+  height: 600,
+  currentStoryIndex: 0,
+  currentStoryGroupIndex: 0,
+  backlitColor: '#1b1b1b',
+  enableGradientBackground: true
+};
+```
+
+---
+
+### Example 2: Minimalist Dark
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  width: 400,
+  height: 700,
+  backlitColor: '#000000',
+  enableGradientBackground: false  // Solid black background
+};
+```
+
+---
+
+### Example 3: Large Desktop View
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  width: 500,
+  height: 900,
+  backlitColor: '#0a0a0a',
+  enableGradientBackground: true
+};
+```
+
+---
+
+### Example 4: Resume Progress
+
+```typescript
+export class AppComponent {
+  storyOptions: NgxStoriesOptions = {
+    width: 338,
+    height: 600,
+    currentStoryGroupIndex: this.getLastGroupIndex(),
+    currentStoryIndex: this.getLastStoryIndex(),
+    backlitColor: '#1b1b1b',
+    enableGradientBackground: true
+  };
+
+  getLastGroupIndex(): number {
+    return parseInt(sessionStorage.getItem('storyGroupIndex') || '0');
+  }
+
+  getLastStoryIndex(): number {
+    return parseInt(sessionStorage.getItem('storyIndex') || '0');
+  }
+}
+```
+
+---
+
+### Example 5: Real-World Usage
+
+From `app.component.ts:17`:
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  backlitColor: '#000',
+  enableGradientBackground: true
+};
+// Uses default width (338) and height (600)
+```
+
+---
+
+## Performance Considerations
+
+### Gradient Background Performance
+
+<Info>
+**Image Stories**: Colors extracted once when story loads  
+**Video Stories**: Colors updated every 30 frames (~2 times per second) for smooth transitions
+</Info>
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:781`
+
+```typescript
+startVideoBackgroundUpdate(videoElement: HTMLVideoElement) {
+  let frameCount = 0;
+  const update = () => {
+    // Update colors every 30 frames (throttled for performance)
+    if (frameCount % 30 === 0) {
+      this.updateBackground(videoElement);
+    }
+    
+    // Smooth interpolation every frame
+    this.currentColors = [
+      this.lerpColor(this.currentColors[0], this.targetColors[0], 0.03),
+      this.lerpColor(this.currentColors[1], this.targetColors[1], 0.03)
+    ];
+    
+    frameCount++;
+    this.videoFrameId = requestAnimationFrame(update);
+  };
+}
+```
+
+**Optimizations**:
+- Canvas size: 50×50 (not full resolution)
+- `willReadFrequently: true` context flag
+- Runs outside Angular zone (no change detection)
+- Direct DOM manipulation for gradient updates
+
+### Disable for Better Performance
+
+```typescript
+storyOptions: NgxStoriesOptions = {
+  enableGradientBackground: false  // Better performance
+};
+```
+
+<Tip>
+If targeting low-end devices or experiencing performance issues, disable gradient backgrounds.
+</Tip>
+
+---
+
+## Responsive Sizing
+
+### Dynamic Dimensions
+
+```typescript
+export class AppComponent {
+  storyOptions: NgxStoriesOptions;
+
+  constructor() {
+    this.storyOptions = {
+      width: this.getResponsiveWidth(),
+      height: this.getResponsiveHeight()
+    };
+  }
+
+  getResponsiveWidth(): number {
+    const screenWidth = window.innerWidth;
+    if (screenWidth < 768) {
+      return Math.min(screenWidth - 40, 338);  // Mobile
+    } else if (screenWidth < 1024) {
+      return 400;  // Tablet
+    } else {
+      return 500;  // Desktop
+    }
+  }
+
+  getResponsiveHeight(): number {
+    const screenHeight = window.innerHeight;
+    return Math.min(screenHeight - 100, 900);
+  }
+}
+```
+
+---
+
+## Options Reference Table
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `width` | `number` | `338` | Container width in pixels |
+| `height` | `number` | `600` | Container height in pixels |
+| `currentStoryIndex` | `number` | `0` | Starting story index |
+| `currentStoryGroupIndex` | `number` | `0` | Starting group index |
+| `backlitColor` | `string` | `'#1b1b1b'` | Background color (CSS value) |
+| `enableGradientBackground` | `boolean` | `true` | Dynamic gradient extraction |
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Events" icon="bolt" href="/guides/events">
+    Handle user interactions and lifecycle events
+  </Card>
+  
+  <Card title="Media Types" icon="image" href="/guides/media-types">
+    Learn about images, videos, and component stories
+  </Card>
+</CardGroup>

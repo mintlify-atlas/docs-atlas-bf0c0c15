@@ -1,0 +1,152 @@
+---
+title: 'NgxStoriesOptions'
+description: 'Configuration options for the ngx-stories component'
+---
+
+## Overview
+
+The `NgxStoriesOptions` interface defines configuration options for customizing the appearance and behavior of the ngx-stories component.
+
+## Import
+
+```typescript
+import { NgxStoriesOptions } from 'ngx-stories';
+```
+
+## Properties
+
+<ResponseField name="width" type="number" optional>
+  Width of the story container in pixels.
+  
+  **Default:** `338`
+</ResponseField>
+
+<ResponseField name="height" type="number" optional>
+  Height of the story container in pixels.
+  
+  **Default:** `600`
+</ResponseField>
+
+<ResponseField name="currentStoryIndex" type="number" optional>
+  Initial story index to display within the current story group.
+  
+  **Default:** `0`
+</ResponseField>
+
+<ResponseField name="currentStoryGroupIndex" type="number" optional>
+  Initial story group index to display.
+  
+  **Default:** `0`
+</ResponseField>
+
+<ResponseField name="backlitColor" type="string" optional>
+  Background color when gradient is disabled or for component stories. Accepts any valid CSS color value.
+  
+  **Default:** `'#1b1b1b'`
+</ResponseField>
+
+<ResponseField name="enableGradientBackground" type="boolean" optional>
+  Enable dynamic gradient background based on content colors. When enabled, the background will adapt to the dominant colors in image and video stories.
+  
+  **Default:** `true`
+</ResponseField>
+
+## Usage Examples
+
+### Basic Configuration
+
+```typescript
+const options: NgxStoriesOptions = {
+  width: 400,
+  height: 700
+};
+```
+
+### Custom Dimensions and Starting Position
+
+```typescript
+const options: NgxStoriesOptions = {
+  width: 375,
+  height: 812,
+  currentStoryGroupIndex: 1, // Start at second group
+  currentStoryIndex: 2 // Start at third story in that group
+};
+```
+
+### Custom Background Styling
+
+```typescript
+const options: NgxStoriesOptions = {
+  backlitColor: '#000000',
+  enableGradientBackground: false // Use solid background color
+};
+```
+
+### Complete Configuration
+
+```typescript
+const options: NgxStoriesOptions = {
+  width: 450,
+  height: 800,
+  currentStoryIndex: 0,
+  currentStoryGroupIndex: 0,
+  backlitColor: '#1a1a2e',
+  enableGradientBackground: true
+};
+```
+
+### In Component Template
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesOptions, StoryGroup } from 'ngx-stories';
+
+@Component({
+  selector: 'app-stories',
+  template: `
+    <ngx-stories 
+      [storyGroups]="storyGroups"
+      [options]="storiesOptions">
+    </ngx-stories>
+  `
+})
+export class StoriesComponent {
+  storiesOptions: NgxStoriesOptions = {
+    width: 390,
+    height: 720,
+    enableGradientBackground: true,
+    backlitColor: '#0f0f0f'
+  };
+
+  storyGroups: StoryGroup[] = [
+    // ... your story groups
+  ];
+}
+```
+
+### Mobile-Optimized Settings
+
+```typescript
+const mobileOptions: NgxStoriesOptions = {
+  width: 360,
+  height: 640,
+  enableGradientBackground: true
+};
+```
+
+### Desktop-Optimized Settings
+
+```typescript
+const desktopOptions: NgxStoriesOptions = {
+  width: 500,
+  height: 900,
+  backlitColor: '#2c2c2c',
+  enableGradientBackground: false
+};
+```
+
+## Related Interfaces
+
+- [StoryGroup](/api/interfaces/story-group) - Story group data structure
+- [Story](/api/interfaces/story) - Individual story items
+- [StoryChangeEventData](/api/interfaces/story-change-event-data) - Story change events

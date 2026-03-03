@@ -1,0 +1,119 @@
+---
+title: 'Story'
+description: 'Interface representing a single story item within a story group'
+---
+
+## Overview
+
+The `Story` interface represents a single story item within a story group. Stories can be images, videos, or dynamic Angular components.
+
+## Import
+
+```typescript
+import { Story } from 'ngx-stories';
+```
+
+## Properties
+
+<ResponseField name="id" type="string" optional>
+  Unique identifier for the story. Auto-generated if not provided.
+</ResponseField>
+
+<ResponseField name="type" type="StoryType" required>
+  The type of content this story displays. Can be:
+  - `'image'` - Static image URL
+  - `'video'` - Video URL (mp4, webm, etc.)
+  - `'component'` - Dynamic Angular component
+</ResponseField>
+
+<ResponseField name="content" type="string | Type<unknown>" required>
+  The content to display:
+  - For `image` and `video` types: URL string
+  - For `component` type: Angular component class
+</ResponseField>
+
+<ResponseField name="crossOrigin" type="'anonymous' | 'use-credentials' | '' | null" optional>
+  CORS setting for image/video elements. Set to `null` to omit the attribute entirely.
+  
+  **Default:** `'anonymous'`
+</ResponseField>
+
+## Usage Examples
+
+### Image Story
+
+```typescript
+const imageStory: Story = {
+  type: 'image',
+  content: 'https://example.com/photo.jpg'
+};
+```
+
+### Video Story
+
+```typescript
+const videoStory: Story = {
+  type: 'video',
+  content: 'https://example.com/clip.mp4'
+};
+```
+
+### Component Story
+
+```typescript
+import { CustomStoryComponent } from './custom-story.component';
+
+const componentStory: Story = {
+  type: 'component',
+  content: CustomStoryComponent
+};
+```
+
+### Story with Custom ID
+
+```typescript
+const story: Story = {
+  id: 'story-001',
+  type: 'image',
+  content: 'https://example.com/image.jpg'
+};
+```
+
+### Story with CORS Configuration
+
+```typescript
+const story: Story = {
+  type: 'image',
+  content: 'https://cdn.example.com/secure-image.jpg',
+  crossOrigin: 'use-credentials'
+};
+```
+
+### Story without CORS Attribute
+
+```typescript
+const story: Story = {
+  type: 'video',
+  content: 'https://same-origin.example.com/video.mp4',
+  crossOrigin: null // Omits the crossOrigin attribute
+};
+```
+
+## Type Details
+
+### StoryType
+
+```typescript
+type StoryType = 'image' | 'video' | 'component';
+```
+
+Supported content types for a story:
+- `image`: Static image URL
+- `video`: Video URL (mp4, webm, etc.)
+- `component`: Dynamic Angular component
+
+## Related Interfaces
+
+- [StoryGroup](/api/interfaces/story-group) - Container for multiple stories
+- [StoryChangeEventData](/api/interfaces/story-change-event-data) - Event data including current/previous stories
+- [NgxStoriesOptions](/api/interfaces/ngx-stories-options) - Configuration options

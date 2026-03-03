@@ -1,0 +1,291 @@
+---
+title: 'NgxStoriesComponent'
+description: 'Complete API reference for the main ngx-stories component'
+---
+
+## Overview
+
+The `NgxStoriesComponent` is the core component of ngx-stories, providing an Instagram-like stories experience for Angular applications. It's a standalone component that handles story rendering, navigation, and user interactions.
+
+## Component Selector
+
+```typescript
+import { NgxStoriesComponent } from 'ngx-stories';
+```
+
+```html
+<ngx-stories
+  [storyGroups]="storyGroups"
+  [options]="options"
+  (triggerOnEnd)="onEnd()"
+  (triggerOnExit)="onExit()"
+  (triggerOnSwipeUp)="onSwipeUp()"
+  (onStoryGroupChange)="onGroupChange($event)"
+  (triggerOnStoryChange)="onStoryChange($event)">
+</ngx-stories>
+```
+
+## Inputs
+
+<ParamField path="storyGroups" type="StoryGroup[]" required>
+  Array of story groups to display. Each group contains multiple stories. This is a required input.
+  
+  ```typescript
+  interface StoryGroup {
+    id?: string;
+    name: string;
+    stories: Story[];
+  }
+  ```
+
+  **Example:**
+  ```typescript
+  storyGroups: StoryGroup[] = [
+    {
+      name: 'User 1',
+      stories: [
+        { type: 'image', content: 'https://example.com/image1.jpg' },
+        { type: 'video', content: 'https://example.com/video1.mp4' }
+      ]
+    }
+  ];
+  ```
+</ParamField>
+
+<ParamField path="options" type="NgxStoriesOptions">
+  Configuration options for customizing the stories viewer behavior and appearance.
+  
+  ```typescript
+  interface NgxStoriesOptions {
+    width?: number;                      // Default: 338
+    height?: number;                     // Default: 600
+    currentStoryIndex?: number;          // Default: 0
+    currentStoryGroupIndex?: number;     // Default: 0
+    backlitColor?: string;              // Default: '#1b1b1b'
+    enableGradientBackground?: boolean;  // Default: true
+  }
+  ```
+
+  **Example:**
+  ```typescript
+  options: NgxStoriesOptions = {
+    width: 400,
+    height: 700,
+    currentStoryIndex: 0,
+    currentStoryGroupIndex: 0,
+    backlitColor: '#000000',
+    enableGradientBackground: true
+  };
+  ```
+</ParamField>
+
+## Outputs
+
+<ResponseField name="triggerOnEnd" type="EventEmitter<void>">
+  Emitted when all stories in all groups have been viewed. Useful for showing related content or returning to the main feed.
+  
+  **Example:**
+  ```typescript
+  onEnd() {
+    console.log('All stories completed');
+    // Navigate back to feed or show related content
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="triggerOnExit" type="EventEmitter<void>">
+  Emitted when the user exits the stories viewer (via swipe down gesture or Escape key press).
+  
+  **Example:**
+  ```typescript
+  onExit() {
+    console.log('User exited stories');
+    // Close the stories viewer
+    this.showStories = false;
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="triggerOnSwipeUp" type="EventEmitter<void>">
+  Emitted when the user performs a swipe up gesture on a story. Commonly used to show "more info" or navigate to related content.
+  
+  **Example:**
+  ```typescript
+  onSwipeUp() {
+    console.log('User swiped up');
+    // Show more details or navigate to product page
+    this.showMoreInfo = true;
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="onStoryGroupChange" type="EventEmitter<number>">
+  Emitted when the active story group changes. Provides the index of the new active group.
+  
+  **Parameters:**
+  - `groupIndex: number` - The zero-based index of the new active story group
+  
+  **Example:**
+  ```typescript
+  onGroupChange(groupIndex: number) {
+    console.log('Switched to group:', groupIndex);
+    // Track analytics or update UI
+    this.currentGroupName = this.storyGroups[groupIndex].name;
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="triggerOnStoryChange" type="EventEmitter<StoryChangeEventData>">
+  Emitted when the active story changes within a group. Provides detailed information about the current and previous stories.
+  
+  **Event Data:**
+  ```typescript
+  interface StoryChangeEventData {
+    currentStoryGroupName: string;
+    currentStoryGroupIndex: number;
+    currentStory: Story;
+    currentStoryIndex: number;
+    previousStory: Story | null;
+    previousStoryIndex: number | null;
+  }
+  ```
+
+  **Example:**
+  ```typescript
+  onStoryChange(data: StoryChangeEventData) {
+    console.log('Story changed:', {
+      group: data.currentStoryGroupName,
+      storyIndex: data.currentStoryIndex,
+      storyType: data.currentStory.type
+    });
+    
+    // Track analytics
+    this.analytics.trackStoryView(data);
+  }
+  ```
+</ResponseField>
+
+## Complete Usage Example
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesComponent, StoryGroup, NgxStoriesOptions, StoryChangeEventData } from 'ngx-stories';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxStoriesComponent],
+  template: `
+    <ngx-stories
+      [storyGroups]="storyGroups"
+      [options]="options"
+      (triggerOnEnd)="onEnd()"
+      (triggerOnExit)="onExit()"
+      (triggerOnSwipeUp)="onSwipeUp()"
+      (onStoryGroupChange)="onGroupChange($event)"
+      (triggerOnStoryChange)="onStoryChange($event)">
+    </ngx-stories>
+  `
+})
+export class AppComponent {
+  storyGroups: StoryGroup[] = [
+    {
+      name: 'Travel Adventures',
+      stories: [
+        { type: 'image', content: 'https://example.com/paris.jpg' },
+        { type: 'video', content: 'https://example.com/beach.mp4' }
+      ]
+    },
+    {
+      name: 'Food Journey',
+      stories: [
+        { type: 'image', content: 'https://example.com/food1.jpg' },
+        { type: 'image', content: 'https://example.com/food2.jpg' }
+      ]
+    }
+  ];
+
+  options: NgxStoriesOptions = {
+    width: 400,
+    height: 700,
+    enableGradientBackground: true,
+    backlitColor: '#000000'
+  };
+
+  onEnd() {
+    console.log('All stories viewed');
+  }
+
+  onExit() {
+    console.log('User exited stories');
+  }
+
+  onSwipeUp() {
+    console.log('User swiped up - show more info');
+  }
+
+  onGroupChange(groupIndex: number) {
+    console.log('Group changed to:', groupIndex);
+  }
+
+  onStoryChange(data: StoryChangeEventData) {
+    console.log('Story changed:', data);
+  }
+}
+```
+
+## User Interactions
+
+The component supports various user interactions:
+
+### Keyboard Navigation
+- **Arrow Right**: Navigate to next story
+- **Arrow Left**: Navigate to previous story
+- **Spacebar**: Pause/resume current story
+- **Escape**: Exit stories viewer
+
+### Touch/Mouse Gestures
+- **Tap/Click left side**: Previous story
+- **Tap/Click right side**: Next story
+- **Long press (500ms)**: Pause story
+- **Swipe left**: Next story group
+- **Swipe right**: Previous story group
+- **Swipe down**: Exit stories
+- **Swipe up**: Trigger swipe up event
+
+## Component Lifecycle
+
+The component implements three Angular lifecycle hooks:
+
+### OnInit
+- Validates input data (storyGroups)
+- Initializes state services
+- Sets up initial story and group indices
+
+### AfterViewInit
+- Configures story containers
+- Applies options
+- Starts first story progress
+
+### OnDestroy
+- Cleans up all intervals and timeouts
+- Stops video playback
+- Prevents memory leaks
+
+## Error Handling
+
+The component includes built-in error handling:
+
+- **Invalid Story Content**: Automatically skips to next story after 3 seconds
+- **Missing Story Groups**: Throws error during validation
+- **Empty Story Groups**: Throws error during validation
+- **Type Mismatches**: Validates content type matches story type
+
+## Related Types
+
+See the complete type definitions:
+- [StoryGroup](/api/interfaces/story-group)
+- [Story](/api/interfaces/story)
+- [NgxStoriesOptions](/api/interfaces/ngx-stories-options)
+- [StoryChangeEventData](/api/interfaces/story-change-event-data)
+- [StoryType and StoryStateType](/api/types)

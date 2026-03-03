@@ -1,0 +1,427 @@
+---
+title: 'Custom Components'
+description: 'Learn how to use Angular components as stories for maximum flexibility and dynamic content'
+---
+
+## Overview
+
+One of the most powerful features of ngx-stories is the ability to use **any Angular component** as a story. This allows you to create highly interactive, data-driven stories beyond simple images and videos.
+
+<Note>
+  Component stories render your Angular component directly within the story viewer, maintaining full component lifecycle and functionality.
+</Note>
+
+## Basic Usage
+
+To use a component as a story, set the `type` to `'component'` and pass the component class (not an instance) as the `content`:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxStoriesComponent, StoryGroup } from 'ngx-stories';
+import { CustomComponentComponent } from './components/custom-component/custom-component.component';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxStoriesComponent],
+  templateUrl: './app.component.html'
+})
+export class AppComponent {
+  storyGroups: StoryGroup[] = [
+    {
+      name: 'Dynamic Content',
+      stories: [
+        { type: 'image', content: 'https://example.com/intro.jpg' },
+        { type: 'component', content: CustomComponentComponent },
+        { type: 'video', content: 'https://example.com/outro.mp4' }
+      ]
+    }
+  ];
+}
+```
+
+## Creating Custom Story Components
+
+Here's a real example from the ngx-stories source code demonstrating a complete custom component:
+
+### Component TypeScript
+
+```typescript custom-component.component.ts
+import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-custom-component',
+  standalone: true,
+  imports: [],
+  templateUrl: './custom-component.component.html',
+  styleUrl: './custom-component.component.scss'
+})
+export class CustomComponentComponent {
+  // Add your component logic here
+  // You can inject services, manage state, handle events, etc.
+}
+```
+
+### Component Template
+
+```html custom-component.component.html
+<div class="custom-container">
+  <h3>Custom Component</h3>
+  <p>This is a beautifully styled custom component, designed to showcase 
+     how dynamic rendering can be visually appealing.</p>
+  
+  <p>Possibilities are endless. For example, here's a simple code snippet:</p>
+  <pre class="code-block">console.log('Dynamic rendering!');</pre>
+  
+  <img src="https://images.unsplash.com/photo-1568667185695-edcbcd4938cb" 
+       width="500" height="300" alt="Example image" class="custom-image" />
+  
+  <p>And there's more! You can extend this component further to fit your use case.</p>
+</div>
+```
+
+### Component Styles
+
+```scss custom-component.component.scss
+.custom-container {
+  width: 100%;
+  background: linear-gradient(to right, #ff7f50, #ff6f61);
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+  color: #fff;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.custom-container h3 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+  background-color: #f4f4f4;
+}
+
+.code-block {
+  background-color: #f4f4f4;
+  color: #333;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.custom-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+```
+
+## Component Lifecycle
+
+### Initialization
+
+When a component story is displayed, ngx-stories:
+
+1. **Clears the container**: The `ViewContainerRef` is cleared to remove any previous component
+2. **Creates the component**: Uses Angular's `createComponent()` API to instantiate your component
+3. **Calls lifecycle hooks**: Your component's `ngOnInit()` and other lifecycle hooks execute normally
+4. **Starts the timer**: The story progress begins (default 5 seconds)
+
+Here's the actual rendering logic from `ngx-stories.component.ts:238-248`:
+
+```typescript
+if (currentStory.type === 'component') {
+  this.cdr.detectChanges();
+  if (this.dynamicComponentContainer) {
+    this.storyUtilityService.renderComponent(
+      this.dynamicComponentContainer, 
+      currentStory.content as Type<any>
+    );
+    this.onContentLoaded();
+  }
+}
+```
+
+### Cleanup
+
+When navigating away from a component story:
+
+- The container is cleared automatically
+- `ngOnDestroy()` is called on your component
+- Memory is released properly
+
+<Warning>
+  Always clean up subscriptions and timers in your component's `ngOnDestroy()` to prevent memory leaks.
+</Warning>
+
+## Advanced Patterns
+
+### Data Passing
+
+Since components are dynamically created, you can't use traditional `@Input()` bindings. Instead, use these approaches:
+
+#### 1. Dependency Injection (Recommended)
+
+```typescript
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class StoryDataService {
+  currentData: any;
+}
+
+// In your story component
+export class DataDrivenStoryComponent {
+  constructor(private dataService: StoryDataService) {
+    const data = this.dataService.currentData;
+    // Use the data...
+  }
+}
+
+// Before showing stories
+export class AppComponent {
+  constructor(private dataService: StoryDataService) {
+    this.dataService.currentData = { userId: 123, campaign: 'summer' };
+  }
+}
+```
+
+#### 2. Story Change Event Listener
+
+Monitor which story is active and react accordingly:
+
+```typescript
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnStoryChange)="onStoryChange($event)">
+</ngx-stories>
+```
+
+```typescript
+onStoryChange(data: StoryChangeEventData) {
+  if (data.currentStory.type === 'component') {
+    console.log('Component story active:', data.currentStoryIndex);
+    // Prepare data for the component
+  }
+}
+```
+
+### Interactive Components
+
+You can create interactive components with buttons, forms, and event handlers:
+
+```typescript
+export class InteractiveStoryComponent {
+  onButtonClick() {
+    // Handle interaction
+    console.log('User interacted with the story!');
+  }
+}
+```
+
+<Note>
+  Touch/click events on interactive elements work normally. The story will pause when holding, but single clicks/taps trigger your handlers.
+</Note>
+
+### Using Angular Services
+
+Fully leverage Angular's dependency injection:
+
+```typescript
+export class ServiceDrivenStoryComponent implements OnInit {
+  data$ = this.apiService.getData();
+  
+  constructor(
+    private apiService: ApiService,
+    private analytics: AnalyticsService
+  ) {}
+  
+  ngOnInit() {
+    this.analytics.trackStoryView('custom-component');
+  }
+}
+```
+
+## Background Behavior
+
+<Info>
+  Component stories **always use the `backlitColor`** option (default: `#1b1b1b`). The gradient background feature is disabled for components since there's no single image/video to extract colors from.
+</Info>
+
+From `ngx-stories.component.ts:717-727`:
+
+```typescript
+if (currentStory.type === 'component' || !this.options.enableGradientBackground) {
+  this.currentStoryBackground = this.options.backlitColor || '#1b1b1b';
+  return;
+}
+```
+
+## Performance Considerations
+
+### Component Complexity
+
+- **Lightweight components** render instantly
+- **Heavy components** (large templates, many calculations) may show a loading indicator briefly
+- Consider lazy-loading heavy dependencies
+
+### Change Detection
+
+ngx-stories uses `OnPush` change detection strategy. If your component needs frequent updates:
+
+```typescript
+export class AnimatedStoryComponent {
+  constructor(private cdr: ChangeDetectorRef) {}
+  
+  updateView() {
+    this.cdr.markForCheck();
+  }
+}
+```
+
+### Memory Management
+
+```typescript
+export class SubscriptionStoryComponent implements OnDestroy {
+  private subscription = new Subscription();
+  
+  ngOnInit() {
+    this.subscription.add(
+      this.dataService.stream$.subscribe(data => {
+        // Handle data
+      })
+    );
+  }
+  
+  ngOnDestroy() {
+    this.subscription.unsubscribe(); // Critical!
+  }
+}
+```
+
+## Type Safety
+
+Ensure type safety with proper imports:
+
+```typescript
+import { Type } from '@angular/core';
+import { Story } from 'ngx-stories';
+
+const componentStory: Story = {
+  type: 'component',
+  content: MyComponent as Type<unknown>
+};
+```
+
+## Validation
+
+ngx-stories validates component stories at runtime (from `ngx-stories.component.ts:286-289`):
+
+```typescript
+if (story.type === 'component' && typeof story.content === 'string') {
+  throw new Error(
+    'ngx-stories: Story with type "component" must have a component class as content, not a string.'
+  );
+}
+```
+
+<Warning>
+  Always pass the component **class**, not a string or component instance.
+</Warning>
+
+## Common Use Cases
+
+### Product Showcases
+```typescript
+export class ProductStoryComponent {
+  product = { name: 'Premium Watch', price: 299, rating: 4.8 };
+}
+```
+
+### User Onboarding
+```typescript
+export class OnboardingStepComponent {
+  step = 1;
+  totalSteps = 5;
+}
+```
+
+### Rich Media Content
+```typescript
+export class MixedMediaStoryComponent {
+  images = ['url1.jpg', 'url2.jpg'];
+  showGallery = true;
+}
+```
+
+### Analytics and Tracking
+```typescript
+export class TrackedStoryComponent implements OnInit {
+  constructor(private analytics: AnalyticsService) {}
+  
+  ngOnInit() {
+    this.analytics.track('story_component_viewed', {
+      component: 'TrackedStoryComponent',
+      timestamp: Date.now()
+    });
+  }
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Keep It Simple" icon="cube">
+    Story components should be focused and lightweight. Complex logic should live in services.
+  </Card>
+  <Card title="Test Responsively" icon="mobile">
+    Ensure your components work at the default story dimensions (338x600px).
+  </Card>
+  <Card title="Clean Up Resources" icon="broom">
+    Always unsubscribe and clear timers in ngOnDestroy().
+  </Card>
+  <Card title="Consider Duration" icon="clock">
+    5 seconds default may be too short for text-heavy components. Users can pause to read.
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Component Not Rendering
+
+**Problem**: Black screen when component story shows
+
+**Solution**: Check that:
+- The component is standalone or properly imported
+- The component has a valid template
+- No errors in browser console
+
+### Memory Leaks
+
+**Problem**: App slows down after viewing many stories
+
+**Solution**: Ensure `ngOnDestroy()` cleans up:
+- Subscriptions
+- Timers (setTimeout, setInterval)
+- Event listeners
+- Large data structures
+
+### Styling Issues
+
+**Problem**: Component styles don't apply
+
+**Solution**:
+- Use `styleUrl` or `styles` in component decorator
+- Check for CSS encapsulation issues
+- Ensure styles are loaded
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Gradient Backgrounds" icon="palette" href="/advanced/gradient-backgrounds">
+    Learn about the dynamic gradient background feature
+  </Card>
+  <Card title="Keyboard Controls" icon="keyboard" href="/advanced/keyboard-controls">
+    Master keyboard navigation and shortcuts
+  </Card>
+</CardGroup>

@@ -1,0 +1,425 @@
+---
+title: 'Media Types'
+description: 'Working with images, videos, and custom Angular components as stories'
+---
+
+## Overview
+
+ngx-stories supports three types of story content: **images**, **videos**, and **Angular components**. Each type has specific behaviors and configuration options.
+
+## Content Type Reference
+
+Reference: `projects/ngx-stories/src/lib/interfaces/interfaces.ts:9`
+
+```typescript
+type StoryType = 'image' | 'video' | 'component';
+```
+
+<Tabs>
+  <Tab title="Image Stories">
+    ## Image Stories
+
+    Image stories are the simplest content type. They display static images with automatic preloading.
+
+    ### Basic Example
+
+    ```typescript
+    {
+      type: 'image',
+      content: 'https://example.com/photo.jpg'
+    }
+    ```
+
+    ### Supported Formats
+
+    - JPEG / JPG
+    - PNG
+    - WebP
+    - GIF (static or animated)
+    - SVG
+
+    ### Automatic Preloading
+
+    Images are preloaded before being displayed to ensure smooth transitions:
+
+    ```typescript
+    // Internal implementation (from ngx-stories.component.ts:250)
+    const imageElement = document.createElement('img');
+    imageElement.src = currentStory.content as string;
+
+    if (this.storyUtilityService.isImageCached(currentStory.content as string)) {
+      this.onContentLoaded(); // Immediate if cached
+    } else {
+      imageElement.onload = () => {
+        this.onContentLoaded();
+      };
+    }
+    ```
+
+    ### Duration
+
+    Image stories display for **5 seconds** by default (5000ms).
+
+    Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:92`
+
+    ### Full Example
+
+    ```typescript
+    storyGroups: StoryGroup[] = [
+      {
+        name: 'Photo Gallery',
+        stories: [
+          { type: 'image', content: 'https://i.ibb.co/ZMVy3KN/pexels-photo.jpg' },
+          { type: 'image', content: 'https://example.com/photo2.jpg' },
+          { type: 'image', content: 'https://example.com/photo3.webp' }
+        ]
+      }
+    ];
+    ```
+
+    ### CORS Configuration
+
+    Control CORS behavior for image loading:
+
+    ```typescript
+    { 
+      type: 'image', 
+      content: 'https://example.com/photo.jpg',
+      crossOrigin: 'anonymous' // default
+    }
+
+    // Other options:
+    crossOrigin: 'use-credentials' // Send credentials
+    crossOrigin: ''                // Empty string
+    crossOrigin: null              // Omit attribute entirely
+    ```
+
+    <Info>
+    The default `crossOrigin` value is `'anonymous'`, which allows images from other domains to be used in canvas operations for the gradient background feature.
+    </Info>
+  </Tab>
+
+  <Tab title="Video Stories">
+    ## Video Stories
+
+    Video stories automatically play and use the video duration for story timing.
+
+    ### Basic Example
+
+    ```typescript
+    {
+      type: 'video',
+      content: 'https://example.com/video.mp4'
+    }
+    ```
+
+    ### Supported Formats
+
+    - MP4 (H.264)
+    - WebM
+    - Ogg
+    - Any format supported by HTML5 `<video>`
+
+    ### Auto-Play Behavior
+
+    Videos start playing automatically when displayed:
+
+    - **Muted by default** (to comply with browser autoplay policies)
+    - **Tap/click to toggle audio** on/off
+    - Progress bar duration matches video length
+
+    ### Dynamic Duration
+
+    Unlike images, video story duration is determined by the video length:
+
+    ```typescript
+    // From ngx-stories.component.ts:672
+    if (currentStory.type === 'video') {
+      const videoElement = /* get video element */;
+      let storyDuration = this.DEFAULT_STORY_DURATION;
+      
+      if (videoElement && isFinite(videoElement.duration) && videoElement.duration > 0) {
+        storyDuration = videoElement.duration * 1000; // Convert to milliseconds
+      }
+      
+      this.startProgressInterval(storyDuration);
+    }
+    ```
+
+    ### Audio Control
+
+    ```typescript
+    // Audio is muted by default
+    // Users can tap the story to unmute
+    
+    toggleAudio() {
+      const videoElement = this.videoService.getActiveVideoElement(...);
+      this.videoService.toggleAudio(videoElement);
+    }
+    ```
+
+    ### Full Example
+
+    ```typescript
+    storyGroups: StoryGroup[] = [
+      {
+        name: 'Video Stories',
+        stories: [
+          { 
+            type: 'video', 
+            content: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' 
+          },
+          { 
+            type: 'video', 
+            content: 'https://videos.pexels.com/video-files/example.mp4',
+            crossOrigin: 'anonymous'
+          }
+        ]
+      }
+    ];
+    ```
+
+    ### Loading States
+
+    Videos show a loading indicator while buffering:
+
+    - **Buffering**: Loading animation displays
+    - **Playing**: Progress bar advances based on video playback
+    - **Error**: Shows error state for 3 seconds, then auto-advances
+
+    <Warning>
+    Ensure your video URLs are accessible and support CORS if hosted on a different domain.
+    </Warning>
+
+    ### CORS for Videos
+
+    ```typescript
+    { 
+      type: 'video', 
+      content: 'https://cdn.example.com/video.mp4',
+      crossOrigin: 'anonymous' // Required for gradient background extraction
+    }
+    ```
+  </Tab>
+
+  <Tab title="Component Stories">
+    ## Component Stories
+
+    Component stories allow you to render any Angular component as story content, enabling fully custom interactive experiences.
+
+    ### Basic Example
+
+    ```typescript
+    import { CustomComponentComponent } from './components/custom-component.component';
+
+    {
+      type: 'component',
+      content: CustomComponentComponent // Pass the component class
+    }
+    ```
+
+    ### Creating a Component Story
+
+    **Step 1: Create your component**
+
+    ```typescript custom-component.component.ts
+    import { Component } from '@angular/core';
+
+    @Component({
+      selector: 'app-custom-component',
+      standalone: true,
+      template: `
+        <div class="custom-story">
+          <h1>Custom Story Content</h1>
+          <p>Add any HTML, components, or interactions here!</p>
+          <button (click)="handleClick()">Click Me</button>
+        </div>
+      `,
+      styles: [`
+        .custom-story {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          height: 100%;
+          color: white;
+          text-align: center;
+          padding: 20px;
+        }
+      `]
+    })
+    export class CustomComponentComponent {
+      handleClick() {
+        console.log('Button clicked in story!');
+      }
+    }
+    ```
+
+    **Step 2: Use in story group**
+
+    ```typescript app.component.ts
+    import { CustomComponentComponent } from './components/custom-component.component';
+
+    storyGroups: StoryGroup[] = [
+      {
+        name: 'Interactive Stories',
+        stories: [
+          { type: 'image', content: 'https://example.com/intro.jpg' },
+          { type: 'component', content: CustomComponentComponent },
+          { type: 'image', content: 'https://example.com/outro.jpg' }
+        ]
+      }
+    ];
+    ```
+
+    ### Duration
+
+    Component stories display for **5 seconds** by default (same as images).
+
+    ### Dynamic Rendering
+
+    Components are dynamically rendered using Angular's `ViewContainerRef`:
+
+    ```typescript
+    // From ngx-stories.component.ts:240
+    if (currentStory.type === 'component') {
+      this.cdr.detectChanges();
+      if (this.dynamicComponentContainer) {
+        this.storyUtilityService.renderComponent(
+          this.dynamicComponentContainer, 
+          currentStory.content as Type<any>
+        );
+        this.onContentLoaded();
+      }
+    }
+    ```
+
+    ### Background Behavior
+
+    <Info>
+    Component stories use the solid `backlitColor` instead of the gradient background, as there's no media to extract colors from.
+    </Info>
+
+    ```typescript
+    // From ngx-stories.component.ts:718
+    if (currentStory.type === 'component' || !this.options.enableGradientBackground) {
+      this.currentStoryBackground = this.options.backlitColor || '#1b1b1b';
+    }
+    ```
+
+    ### Use Cases
+
+    <CardGroup cols={2}>
+      <Card title="Forms" icon="input-text">
+        Collect user input within a story
+      </Card>
+      <Card title="Polls" icon="chart-bar">
+        Interactive voting or surveys
+      </Card>
+      <Card title="Product Cards" icon="shopping-cart">
+        Showcase products with buttons
+      </Card>
+      <Card title="Animations" icon="wand-magic-sparkles">
+        Custom animations and effects
+      </Card>
+    </CardGroup>
+
+    ### Real-World Example
+
+    ```typescript
+    // From app.component.ts:26
+    storyGroups: StoryGroup[] = [
+      {
+        name: 'Steve Smith',
+        stories: [
+          { type: 'image', content: 'https://i.ibb.co/ZMVy3KN/pexels-photo.jpg' },
+          { type: 'component', content: CustomComponentComponent },
+          { type: 'video', content: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' }
+        ]
+      }
+    ];
+    ```
+
+    <Warning>
+    Component stories must use a **component class**, not a string. Using a string will throw a validation error.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## CORS Configuration
+
+Reference: `projects/ngx-stories/src/lib/interfaces/interfaces.ts:42`
+
+```typescript
+interface Story {
+  crossOrigin?: 'anonymous' | 'use-credentials' | '' | null;
+}
+```
+
+### When to Configure CORS
+
+| Scenario | Recommended Setting |
+|----------|--------------------|
+| Same-origin media | `null` (omit attribute) |
+| Cross-origin public media | `'anonymous'` (default) |
+| Cross-origin with credentials | `'use-credentials'` |
+| Gradient background disabled | `null` |
+
+### Example
+
+```typescript
+stories: [
+  // Public CDN - use anonymous
+  { 
+    type: 'image', 
+    content: 'https://cdn.example.com/image.jpg',
+    crossOrigin: 'anonymous' 
+  },
+  
+  // Same origin - omit CORS
+  { 
+    type: 'video', 
+    content: '/assets/videos/local.mp4',
+    crossOrigin: null 
+  },
+  
+  // Requires authentication
+  { 
+    type: 'image', 
+    content: 'https://private.example.com/image.jpg',
+    crossOrigin: 'use-credentials' 
+  }
+]
+```
+
+## Validation
+
+ngx-stories validates story types at initialization:
+
+```typescript
+// From ngx-stories.component.ts:286
+for (const story of group.stories) {
+  if (story.type === 'component' && typeof story.content === 'string') {
+    throw new Error(
+      'Story with type "component" must have a component class as content, not a string.'
+    );
+  }
+  if ((story.type === 'image' || story.type === 'video') && typeof story.content !== 'string') {
+    throw new Error(
+      `Story with type "${story.type}" must have a URL string as content.`
+    );
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Styling & Options" icon="palette" href="/guides/styling-and-options">
+    Customize dimensions, colors, and appearance
+  </Card>
+  
+  <Card title="Events" icon="bolt" href="/guides/events">
+    Handle story changes and user interactions
+  </Card>
+</CardGroup>

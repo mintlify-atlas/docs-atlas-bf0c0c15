@@ -1,0 +1,667 @@
+---
+title: 'Events'
+description: 'Handle event emitters, lifecycle hooks, and user interaction callbacks'
+---
+
+## Overview
+
+ngx-stories provides five `@Output` events to track user interactions and story lifecycle. These events allow you to integrate story behavior with your application logic.
+
+## Event Reference
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:42`
+
+```typescript
+@Output() readonly triggerOnEnd = new EventEmitter<void>();
+@Output() readonly triggerOnExit = new EventEmitter<void>();
+@Output() readonly triggerOnSwipeUp = new EventEmitter<void>();
+@Output() readonly onStoryGroupChange = new EventEmitter<number>();
+@Output() readonly triggerOnStoryChange = new EventEmitter<StoryChangeEventData>();
+```
+
+---
+
+## triggerOnEnd
+
+**Type**: `EventEmitter<void>`  
+**Payload**: None  
+**When**: Emitted when all stories in all groups have been viewed
+
+### Usage
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnEnd)="onStoriesComplete()">
+</ngx-stories>
+```
+
+```typescript app.component.ts
+export class AppComponent {
+  onStoriesComplete() {
+    console.log('All stories completed!');
+    // Close the story viewer
+    this.showStories = false;
+    // Show "You're all caught up" message
+    this.showCompletionMessage = true;
+  }
+}
+```
+
+### Implementation
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:406`
+
+```typescript
+navigateStory(direction: 'next' | 'previous') {
+  // ... navigation logic
+  
+  // Trigger onEnd when all groups traversed
+  if (this.currentStoryGroupIndex === this.storyGroups.length) {
+    this.onEnd();
+    return;
+  }
+}
+
+private onEnd() {
+  this.triggerOnEnd.emit();
+}
+```
+
+### Real-World Example
+
+From `app.component.ts:50`:
+
+```typescript
+triggerOnEnd() {
+  console.log('End');
+}
+```
+
+<Info>
+This event fires when users reach the end by watching all stories or by advancing to the last story.
+</Info>
+
+---
+
+## triggerOnExit
+
+**Type**: `EventEmitter<void>`  
+**Payload**: None  
+**When**: Emitted when the user exits stories (swipe down or Escape key)
+
+### Usage
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnExit)="closeStoryViewer()">
+</ngx-stories>
+```
+
+```typescript app.component.ts
+export class AppComponent {
+  showStories = true;
+
+  closeStoryViewer() {
+    console.log('User exited stories');
+    this.showStories = false;
+    // Navigate away
+    this.router.navigate(['/home']);
+  }
+}
+```
+
+### Triggers
+
+1. **Swipe Down Gesture**
+2. **Escape Key**
+
+### Implementation
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:379`
+
+```typescript
+private handleSwipe(direction: string) {
+  if (direction === 'down') {
+    this.clearProgressInterval();
+    this.onExit(); // Emits triggerOnExit
+  }
+}
+
+@HostListener('document:keydown', ['$event'])
+handleKeyPress(event: KeyboardEvent): void {
+  if (event.key === 'Escape') {
+    this.onExit(); // Emits triggerOnExit
+  }
+}
+
+private onExit() {
+  this.triggerOnExit.emit();
+}
+```
+
+### Real-World Example
+
+From `app.component.ts:54`:
+
+```typescript
+triggerOnExit() {
+  console.log('Exit');
+}
+```
+
+<Tip>
+Use this event to hide the story viewer, navigate to another route, or restore previous UI state.
+</Tip>
+
+---
+
+## triggerOnSwipeUp
+
+**Type**: `EventEmitter<void>`  
+**Payload**: None  
+**When**: Emitted when the user swipes up on a story
+
+### Usage
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnSwipeUp)="showMoreDetails()">
+</ngx-stories>
+```
+
+```typescript app.component.ts
+export class AppComponent {
+  showMoreDetails() {
+    console.log('User swiped up - showing more details');
+    // Open modal with more information
+    this.dialogService.open(ProductDetailsComponent);
+    
+    // Or navigate to detail page
+    this.router.navigate(['/product-details']);
+    
+    // Or open external link
+    window.open('https://example.com/details', '_blank');
+  }
+}
+```
+
+### Common Use Cases
+
+<CardGroup cols={2}>
+  <Card title="See More" icon="arrow-up-right-from-square">
+    Link to detailed content or external pages
+  </Card>
+  <Card title="Product Details" icon="shopping-cart">
+    Show product information in modal or new page
+  </Card>
+  <Card title="Call to Action" icon="bullhorn">
+    Trigger sign-up, purchase, or other actions
+  </Card>
+  <Card title="Social Sharing" icon="share-nodes">
+    Open sharing dialog or copy link
+  </Card>
+</CardGroup>
+
+### Implementation
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:382`
+
+```typescript
+private handleSwipe(direction: string) {
+  if (direction === 'up') {
+    this.onSwipeUpTriggered();
+  }
+}
+
+private onSwipeUpTriggered() {
+  this.triggerOnSwipeUp.emit();
+}
+```
+
+<Note>
+The story continues playing after swipe up. Use this for non-disruptive actions.
+</Note>
+
+---
+
+## onStoryGroupChange
+
+**Type**: `EventEmitter<number>`  
+**Payload**: `number` (new story group index)  
+**When**: Emitted when the active story group changes
+
+### Usage
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (onStoryGroupChange)="onGroupChange($event)">
+</ngx-stories>
+```
+
+```typescript app.component.ts
+export class AppComponent {
+  currentGroupIndex = 0;
+
+  storyGroups: StoryGroup[] = [
+    { name: 'John Doe', stories: [...] },
+    { name: 'Jane Smith', stories: [...] },
+    { name: 'Bob Johnson', stories: [...] }
+  ];
+
+  onGroupChange(groupIndex: number) {
+    this.currentGroupIndex = groupIndex;
+    const groupName = this.storyGroups[groupIndex].name;
+    console.log(`Switched to ${groupName} (index: ${groupIndex})`);
+    
+    // Track analytics
+    this.analytics.track('story_group_viewed', {
+      groupIndex,
+      groupName
+    });
+  }
+}
+```
+
+### Implementation
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:632`
+
+```typescript
+private goToNextStoryGroup() {
+  // ... transition logic
+  this.currentStoryGroupIndex++;
+  this.storyGroupChange(); // Emits event
+}
+
+private goToPreviousStoryGroup() {
+  // ... transition logic
+  this.currentStoryGroupIndex--;
+  this.storyGroupChange(); // Emits event
+}
+
+private storyGroupChange(storyGroupIndex: number = this.currentStoryGroupIndex) {
+  this.onStoryGroupChange.emit(storyGroupIndex);
+}
+```
+
+### Real-World Example
+
+From `app.component.ts:58`:
+
+```typescript
+triggerOnStoryGroupChange(storyGroup: number) {
+  console.log('currentStoryGroupDetails', storyGroup);
+}
+```
+
+<Info>
+This event fires on swipe left/right between story groups, not on story-to-story navigation within a group.
+</Info>
+
+---
+
+## triggerOnStoryChange
+
+**Type**: `EventEmitter<StoryChangeEventData>`  
+**Payload**: `StoryChangeEventData` object  
+**When**: Emitted when the individual story changes within a group
+
+### StoryChangeEventData Interface
+
+Reference: `projects/ngx-stories/src/lib/interfaces/interfaces.ts:100`
+
+```typescript
+interface StoryChangeEventData {
+  currentStoryGroupName: string;        // Name of current group
+  currentStoryGroupIndex: number;       // Index of current group
+  currentStory: Story;                  // Current story object
+  currentStoryIndex: number;            // Index of current story
+  previousStory: Story | null;          // Previous story (null if first)
+  previousStoryIndex: number | null;    // Previous index (null if first)
+}
+```
+
+### Usage
+
+```html
+<ngx-stories 
+  [storyGroups]="storyGroups"
+  (triggerOnStoryChange)="onStoryChange($event)">
+</ngx-stories>
+```
+
+```typescript app.component.ts
+import { StoryChangeEventData } from 'ngx-stories';
+
+export class AppComponent {
+  onStoryChange(data: StoryChangeEventData) {
+    console.log('Story Changed:');
+    console.log('Group:', data.currentStoryGroupName);
+    console.log('Story Index:', data.currentStoryIndex);
+    console.log('Story Type:', data.currentStory.type);
+    
+    // Save progress
+    this.saveProgress(data.currentStoryGroupIndex, data.currentStoryIndex);
+    
+    // Track analytics
+    this.analytics.track('story_viewed', {
+      groupName: data.currentStoryGroupName,
+      storyType: data.currentStory.type,
+      storyIndex: data.currentStoryIndex
+    });
+  }
+
+  saveProgress(groupIndex: number, storyIndex: number) {
+    localStorage.setItem('lastGroupIndex', groupIndex.toString());
+    localStorage.setItem('lastStoryIndex', storyIndex.toString());
+  }
+}
+```
+
+### Detailed Example
+
+```typescript
+onStoryChange(eventData: StoryChangeEventData) {
+  console.log('Current Story Group:', eventData.currentStoryGroupName);
+  // Output: "John Doe"
+  
+  console.log('Current Story Group Index:', eventData.currentStoryGroupIndex);
+  // Output: 0
+  
+  console.log('Current Story:', eventData.currentStory);
+  // Output: { type: 'image', content: 'https://example.com/story.jpg', id: '...' }
+  
+  console.log('Current Story Index:', eventData.currentStoryIndex);
+  // Output: 2
+  
+  console.log('Previous Story:', eventData.previousStory);
+  // Output: { type: 'video', content: 'https://example.com/prev.mp4', id: '...' } or null
+  
+  console.log('Previous Story Index:', eventData.previousStoryIndex);
+  // Output: 1 or null
+}
+```
+
+### Implementation
+
+Reference: `projects/ngx-stories/src/lib/ngx-stories.component.ts:636`
+
+```typescript
+private populateCurrentDetails(storyIndex: number, storyGroupIndex: number): void {
+  try {
+    const dataToSend: StoryChangeEventData = {
+      currentStoryGroupName: this.storyGroups[storyGroupIndex].name,
+      currentStoryGroupIndex: storyGroupIndex,
+      currentStory: this.storyGroups[storyGroupIndex].stories[storyIndex],
+      currentStoryIndex: storyIndex,
+      previousStory: storyIndex !== 0 
+        ? this.storyGroups[storyGroupIndex].stories[storyIndex - 1] 
+        : null,
+      previousStoryIndex: storyIndex !== 0 ? storyIndex - 1 : null
+    };
+    this.triggerOnStoryChange.emit(dataToSend);
+  } catch (error) {
+    console.error('ngx-stories: Failed to emit story change event:', error);
+  }
+}
+```
+
+### Real-World Example
+
+From `app.component.ts:62`:
+
+```typescript
+currentStoryDetails(eventData: object) {
+  console.log('currentStoryDetails', eventData);
+}
+```
+
+<Tip>
+Use this event to save viewing progress, track analytics, or update UI based on the current story.
+</Tip>
+
+---
+
+## Complete Example
+
+Here's a comprehensive example using all events:
+
+```html app.component.html
+<div *ngIf="showStories" class="story-container">
+  <ngx-stories 
+    [storyGroups]="storyGroups"
+    [options]="storyOptions"
+    (triggerOnEnd)="onAllStoriesComplete()"
+    (triggerOnExit)="closeStoryViewer()"
+    (triggerOnSwipeUp)="showMoreDetails()"
+    (onStoryGroupChange)="onStoryGroupChange($event)"
+    (triggerOnStoryChange)="onStoryChange($event)">
+  </ngx-stories>
+</div>
+
+<div *ngIf="showCompletionMessage" class="completion-message">
+  You're all caught up!
+</div>
+```
+
+```typescript app.component.ts
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { 
+  NgxStoriesComponent, 
+  StoryGroup, 
+  NgxStoriesOptions,
+  StoryChangeEventData 
+} from 'ngx-stories';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxStoriesComponent, CommonModule],
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent {
+  showStories = true;
+  showCompletionMessage = false;
+  currentGroupIndex = 0;
+  currentStoryIndex = 0;
+
+  storyOptions: NgxStoriesOptions = {
+    currentStoryGroupIndex: this.getLastGroupIndex(),
+    currentStoryIndex: this.getLastStoryIndex()
+  };
+
+  storyGroups: StoryGroup[] = [
+    // Your story groups
+  ];
+
+  constructor(private router: Router) {}
+
+  // Called when all stories complete
+  onAllStoriesComplete() {
+    console.log('All stories viewed!');
+    this.showStories = false;
+    this.showCompletionMessage = true;
+    this.clearProgress();
+    
+    // Auto-hide message after 3 seconds
+    setTimeout(() => {
+      this.showCompletionMessage = false;
+    }, 3000);
+  }
+
+  // Called on swipe down or Escape key
+  closeStoryViewer() {
+    console.log('Story viewer closed');
+    this.showStories = false;
+    this.saveProgress();
+    this.router.navigate(['/home']);
+  }
+
+  // Called on swipe up
+  showMoreDetails() {
+    console.log('Swipe up detected - showing details');
+    const currentGroup = this.storyGroups[this.currentGroupIndex];
+    const currentStory = currentGroup.stories[this.currentStoryIndex];
+    
+    // Navigate to detail page with context
+    this.router.navigate(['/details'], {
+      queryParams: {
+        group: currentGroup.name,
+        storyIndex: this.currentStoryIndex
+      }
+    });
+  }
+
+  // Called when story group changes
+  onStoryGroupChange(groupIndex: number) {
+    this.currentGroupIndex = groupIndex;
+    const groupName = this.storyGroups[groupIndex].name;
+    console.log(`Viewing stories from: ${groupName}`);
+    
+    // Track analytics
+    this.trackEvent('story_group_viewed', {
+      groupIndex,
+      groupName
+    });
+  }
+
+  // Called when individual story changes
+  onStoryChange(data: StoryChangeEventData) {
+    this.currentGroupIndex = data.currentStoryGroupIndex;
+    this.currentStoryIndex = data.currentStoryIndex;
+    
+    console.log('Story changed:', {
+      group: data.currentStoryGroupName,
+      story: data.currentStoryIndex,
+      type: data.currentStory.type
+    });
+    
+    // Save progress
+    this.saveProgress();
+    
+    // Track analytics
+    this.trackEvent('story_viewed', {
+      groupName: data.currentStoryGroupName,
+      groupIndex: data.currentStoryGroupIndex,
+      storyIndex: data.currentStoryIndex,
+      storyType: data.currentStory.type
+    });
+  }
+
+  // Helper methods
+  saveProgress() {
+    localStorage.setItem('lastGroupIndex', this.currentGroupIndex.toString());
+    localStorage.setItem('lastStoryIndex', this.currentStoryIndex.toString());
+  }
+
+  clearProgress() {
+    localStorage.removeItem('lastGroupIndex');
+    localStorage.removeItem('lastStoryIndex');
+  }
+
+  getLastGroupIndex(): number {
+    return parseInt(localStorage.getItem('lastGroupIndex') || '0');
+  }
+
+  getLastStoryIndex(): number {
+    return parseInt(localStorage.getItem('lastStoryIndex') || '0');
+  }
+
+  trackEvent(eventName: string, data: any) {
+    // Your analytics implementation
+    console.log('Analytics:', eventName, data);
+  }
+}
+```
+
+---
+
+## Event Summary
+
+| Event | Payload | When Fired | Common Use Case |
+|-------|---------|------------|-----------------|
+| `triggerOnEnd` | `void` | All stories completed | Close viewer, show completion message |
+| `triggerOnExit` | `void` | Swipe down or Escape | Close viewer, navigate away |
+| `triggerOnSwipeUp` | `void` | Swipe up gesture | "See More" actions, CTAs |
+| `onStoryGroupChange` | `number` | Story group changes | Track group views, update UI |
+| `triggerOnStoryChange` | `StoryChangeEventData` | Individual story changes | Save progress, track analytics |
+
+---
+
+## Best Practices
+
+### 1. Save Progress
+
+Use `triggerOnStoryChange` to save viewing progress:
+
+```typescript
+onStoryChange(data: StoryChangeEventData) {
+  sessionStorage.setItem('progress', JSON.stringify({
+    groupIndex: data.currentStoryGroupIndex,
+    storyIndex: data.currentStoryIndex
+  }));
+}
+```
+
+### 2. Analytics Tracking
+
+Track user engagement with stories:
+
+```typescript
+onStoryChange(data: StoryChangeEventData) {
+  this.analytics.track('story_viewed', {
+    groupName: data.currentStoryGroupName,
+    storyType: data.currentStory.type,
+    timestamp: new Date().toISOString()
+  });
+}
+```
+
+### 3. Graceful Exit
+
+Always handle exit events to clean up:
+
+```typescript
+closeStoryViewer() {
+  this.showStories = false;
+  this.saveProgress();
+  this.clearVideoPreload();
+  document.body.style.overflow = 'auto'; // Restore scrolling
+}
+```
+
+### 4. Action on Swipe Up
+
+Provide meaningful actions:
+
+```typescript
+showMoreDetails() {
+  // Don't just log - provide value
+  if (this.isProductStory()) {
+    this.openProductModal();
+  } else if (this.isArticleStory()) {
+    this.openArticle();
+  }
+}
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Gestures & Navigation" icon="hand-pointer" href="/guides/gestures-and-navigation">
+    Learn about all user interactions and controls
+  </Card>
+  
+  <Card title="API Reference" icon="code" href="/api/ngx-stories-component">
+    Explore complete API documentation
+  </Card>
+</CardGroup>
