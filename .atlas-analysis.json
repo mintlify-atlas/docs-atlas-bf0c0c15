@@ -1,0 +1,89 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "Ngx Stories",
+  "projectDescription": "An Angular component library for rendering Instagram-like stories with rich gesture support and dynamic backgrounds.",
+  "theme": "palm",
+  "primaryColor": "#C13584",
+  "lightColor": "#E1306C",
+  "darkColor": "#833AB4",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/basic-usage",
+              "guides/media-types",
+              "guides/gestures-and-navigation",
+              "guides/styling-and-options",
+              "guides/events"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "advanced/custom-components",
+              "advanced/gradient-backgrounds",
+              "advanced/keyboard-controls"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Components",
+            "pages": [
+              "api/ngx-stories-component"
+            ]
+          },
+          {
+            "group": "Interfaces",
+            "pages": [
+              "api/interfaces/story-group",
+              "api/interfaces/story",
+              "api/interfaces/ngx-stories-options",
+              "api/interfaces/story-change-event-data"
+            ]
+          },
+          {
+            "group": "Types & Constants",
+            "pages": [
+              "api/types",
+              "api/default-options"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Instagram-like story viewer with progress bars",
+    "Support for images, videos, and custom Angular components",
+    "Touch gestures (swipe, tap, hold) and keyboard navigation",
+    "Dynamic gradient backgrounds extracted from media content",
+    "Customizable dimensions, colors, and behavior",
+    "Event emitters for story lifecycle hooks"
+  ],
+  "publicApiSurface": [
+    "NgxStoriesComponent",
+    "Story (interface)",
+    "StoryGroup (interface)",
+    "NgxStoriesOptions (interface)",
+    "StoryChangeEventData (interface)",
+    "StoryType (type)",
+    "StoryStateType (type)",
+    "DEFAULT_STORIES_OPTIONS (constant)"
+  ]
+}
